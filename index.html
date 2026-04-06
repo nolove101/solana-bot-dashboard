@@ -97,13 +97,28 @@ function autoTrade(token, price, score){
   if(!running) return;
   if(score < 4) return;
 
-  let tradeSize = balance * 0.05;
+  let tradeSizeUSD = balance * 0.05;
+  let quantity = tradeSizeUSD / price;
   let win = Math.random() > 0.4;
 
   if(win){
-    let profit = tradeSize * (0.05 + Math.random()*0.1);
+    let sellPrice = price * (1.05 + Math.random()*0.05);
+    let profit = (sellPrice - price) * quantity;
     balance += profit;
-    log(`WIN ${token} +$${profit.toFixed(2)}`);
+
+    log(`BUY ${token} | Qty: ${quantity.toFixed(4)} | Price: $${price.toFixed(6)}`);
+    log(`SELL ${token} | Qty: ${quantity.toFixed(4)} | Price: $${sellPrice.toFixed(6)} | PROFIT: +$${profit.toFixed(2)}`);
+  } else {
+    let sellPrice = price * (0.95 - Math.random()*0.03);
+    let loss = (price - sellPrice) * quantity;
+    balance -= loss;
+
+    log(`BUY ${token} | Qty: ${quantity.toFixed(4)} | Price: $${price.toFixed(6)}`);
+    log(`SELL ${token} | Qty: ${quantity.toFixed(4)} | Price: $${sellPrice.toFixed(6)} | LOSS: -$${loss.toFixed(2)}`);
+  }
+
+  document.getElementById('balance').innerText = balance.toFixed(2);
+} +$${profit.toFixed(2)}`);
   } else {
     let loss = tradeSize * (0.03 + Math.random()*0.05);
     balance -= loss;
