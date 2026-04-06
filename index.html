@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SOL Pro Scanner</title>
+<title>SOL AUTO TRADER</title>
 <style>
 body { font-family: Arial; background:#0f172a; color:#e2e8f0; margin:0; }
 .container { padding:20px; }
@@ -18,13 +18,15 @@ button { padding:6px 12px; border:none; border-radius:6px; cursor:pointer; }
 </head>
 <body>
 <div class="container">
-<h1>🚀 SOL PRO SCANNER</h1>
+<h1>🚀 SOL AUTO TRADER</h1>
 
 <div class="card">
 <h3>Mode</h3>
 <button onclick="setMode('demo')">Demo</button>
 <button onclick="setMode('real')">Real</button>
 <p id="mode">Current: DEMO</p>
+<p><b>Balance:</b> $<span id="balance">10000</span></p>
+<button onclick="toggleBot()">Start / Stop Auto</button>
 </div>
 
 <div class="card">
@@ -38,7 +40,6 @@ button { padding:6px 12px; border:none; border-radius:6px; cursor:pointer; }
 <th>Volume</th>
 <th>Change</th>
 <th>Score</th>
-<th>Action</th>
 </tr>
 </thead>
 <tbody id="opps"></tbody>
@@ -53,10 +54,17 @@ button { padding:6px 12px; border:none; border-radius:6px; cursor:pointer; }
 
 <script>
 let mode = 'demo';
+let balance = 10000;
+let running = false;
 
 function setMode(m){
   mode = m;
   document.getElementById('mode').innerText = "Current: " + m.toUpperCase();
+}
+
+function toggleBot(){
+  running = !running;
+  log(running ? "AUTO BOT STARTED" : "AUTO BOT STOPPED");
 }
 
 function log(msg){
@@ -67,7 +75,6 @@ function log(msg){
 
 function scoreToken(liq, vol, change){
   let score = 0;
-
   if(liq > 100000) score += 2;
   else if(liq > 50000) score += 1;
 
@@ -84,6 +91,26 @@ function scoreBadge(score){
   if(score >=5) return '<span class="badge good">A</span>';
   if(score >=3) return '<span class="badge mid">B</span>';
   return '<span class="badge low">C</span>';
+}
+
+function autoTrade(token, price, score){
+  if(!running) return;
+  if(score < 4) return;
+
+  let tradeSize = balance * 0.05;
+  let win = Math.random() > 0.4;
+
+  if(win){
+    let profit = tradeSize * (0.05 + Math.random()*0.1);
+    balance += profit;
+    log(`WIN ${token} +$${profit.toFixed(2)}`);
+  } else {
+    let loss = tradeSize * (0.03 + Math.random()*0.05);
+    balance -= loss;
+    log(`LOSS ${token} -$${loss.toFixed(2)}`);
+  }
+
+  document.getElementById('balance').innerText = balance.toFixed(2);
 }
 
 async function fetchData(){
@@ -110,7 +137,7 @@ async function fetchData(){
 
     results.sort((a,b) => b.score - a.score);
 
-    results.slice(0,10).forEach(r => {
+    results.slice(0,5).forEach(r => {
       const row = `
       <tr>
         <td>${r.p.baseToken.symbol}</td>
@@ -119,25 +146,14 @@ async function fetchData(){
         <td>$${r.vol.toFixed(0)}</td>
         <td>${r.change.toFixed(2)}%</td>
         <td>${scoreBadge(r.score)}</td>
-        <td><button onclick="trade('${r.p.baseToken.symbol}', ${r.p.priceUsd})">Trade</button></td>
       </tr>`;
       tbody.innerHTML += row;
-    });
 
-    if(results.length === 0){
-      tbody.innerHTML = "<tr><td colspan='7'>No opportunities</td></tr>";
-    }
+      autoTrade(r.p.baseToken.symbol, r.p.priceUsd, r.score);
+    });
 
   }catch(e){
     console.log(e);
-  }
-}
-
-function trade(token, price){
-  if(mode === 'demo'){
-    log(`DEMO → ${token} at $${price}`);
-  } else {
-    log(`REAL SIGNAL → ${token} at $${price}`);
   }
 }
 
