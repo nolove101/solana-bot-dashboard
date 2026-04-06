@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SOL Opportunity Scanner (Real Data)</title>
+<style>
+body { font-family: Arial; background:#0f172a; color:#e2e8f0; margin:0; }
+.container { padding:20px; }
+.card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:20px; }
+table { width:100%; border-collapse: collapse; }
+th, td { padding:10px; border-bottom:1px solid #334155; text-align:left; }
+button { padding:10px; border:none; border-radius:8px; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🚀 SOL Opportunity Scanner</h1>
+
+<div class="card">
+<h3>Mode</h3>
+<button onclick="setMode('demo')">Demo</button>
+<button onclick="setMode('real')">Real</button>
+<p id="mode">Current: DEMO</p>
+</div>
+
+<div class="card">
+<h3>Live Opportunities (Real Data)</h3>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Price</th>
+<th>Liquidity</th>
+<th>5m Volume</th>
+<th>5m Change</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="opps"></tbody>
+</table>
+</div>
+
+<div class="card">
+<h3>Trade Logs</h3>
+<div id="logs" style="height:250px; overflow:auto;"></div>
+</div>
+</div>
+
+<script>
+let mode = 'demo';
+
+function setMode(m){
+  mode = m;
+  document.getElementById('mode').innerText = "Current: " + m.toUpperCase();
+}
+
+function log(msg){
+  const el = document.getElementById('logs');
+  el.innerHTML += `<p>${new Date().toLocaleTimeString()} - ${msg}</p>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+async function fetchData(){
+  try{
+    const res = await fetch("https://api.dexscreener.com/latest/dex/pairs/solana");
+    const data = await res.json();
+
+    const pairs = data.pairs.slice(0,20);
+    const tbody = document.getElementById('opps');
+    tbody.innerHTML = '';
+
+    pairs.forEach(p => {
+      const liq = p.liquidity.usd;
+      const vol = p.volume.m5;
+      const change = p.priceChange.m5;
+
+      if(liq > 50000 && vol > 20000 && change > 5){
+        const row = `
+        <tr>
+          <td>${p.baseToken.symbol}</td>
+          <td>$${p.priceUsd}</td>
+          <td>$${liq.toFixed(0)}</td>
+          <td>$${vol.toFixed(0)}</td>
+          <td>${change.toFixed(2)}%</td>
+          <td><button onclick="trade('${p.baseToken.symbol}', ${p.priceUsd})">Trade</button></td>
+        </tr>`;
+        tbody.innerHTML += row;
+      }
+    });
+  }catch(e){
+    console.log(e);
+  }
+}
+
+function trade(token, price){
+  if(mode === 'demo'){
+    log(`DEMO TRADE → ${token} at $${price}`);
+  } else {
+    log(`REAL SIGNAL → ${token} at $${price} (connect backend)`);
+  }
+}
+
+setInterval(fetchData, 5000);
+fetchData();
+</script>
+</body>
+</html>
