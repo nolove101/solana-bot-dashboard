@@ -81,4 +81,68 @@ function scoreToken(liq, vol, change){
 }
 
 function scoreBadge(score){
-  if(score >=5) return
+  if(score >=5) return '<span class="badge good">A</span>';
+  if(score >=3) return '<span class="badge mid">B</span>';
+  return '<span class="badge low">C</span>';
+}
+
+async function fetchData(){
+  try{
+    const res = await fetch("https://api.dexscreener.com/latest/dex/search/?q=SOL");
+    const data = await res.json();
+
+    const pairs = data.pairs || [];
+    const tbody = document.getElementById('opps');
+    tbody.innerHTML = '';
+
+    let results = [];
+
+    pairs.forEach(p => {
+      const liq = p.liquidity?.usd || 0;
+      const vol = p.volume?.h24 || 0;
+      const change = p.priceChange?.h24 || 0;
+
+      if(liq > 30000 && vol > 20000){
+        const score = scoreToken(liq, vol, change);
+        results.push({p, liq, vol, change, score});
+      }
+    });
+
+    results.sort((a,b) => b.score - a.score);
+
+    results.slice(0,10).forEach(r => {
+      const row = `
+      <tr>
+        <td>${r.p.baseToken.symbol}</td>
+        <td>$${parseFloat(r.p.priceUsd).toFixed(6)}</td>
+        <td>$${r.liq.toFixed(0)}</td>
+        <td>$${r.vol.toFixed(0)}</td>
+        <td>${r.change.toFixed(2)}%</td>
+        <td>${scoreBadge(r.score)}</td>
+        <td><button onclick="trade('${r.p.baseToken.symbol}', ${r.p.priceUsd})">Trade</button></td>
+      </tr>`;
+      tbody.innerHTML += row;
+    });
+
+    if(results.length === 0){
+      tbody.innerHTML = "<tr><td colspan='7'>No opportunities</td></tr>";
+    }
+
+  }catch(e){
+    console.log(e);
+  }
+}
+
+function trade(token, price){
+  if(mode === 'demo'){
+    log(`DEMO → ${token} at $${price}`);
+  } else {
+    log(`REAL SIGNAL → ${token} at $${price}`);
+  }
+}
+
+setInterval(fetchData, 5000);
+fetchData();
+</script>
+</body>
+</html>
