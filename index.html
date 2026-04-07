@@ -2,18 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SOL AUTO TRADER</title>
+<title>SOL AUTO TRADER (FIXED)</title>
 <style>
 body { font-family: Arial; background:#0f172a; color:#e2e8f0; margin:0; }
 .container { padding:20px; }
 .card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:20px; }
 table { width:100%; border-collapse: collapse; }
 th, td { padding:10px; border-bottom:1px solid #334155; text-align:left; }
-button { padding:6px 12px; border:none; border-radius:6px; cursor:pointer; }
 .badge { padding:4px 8px; border-radius:6px; }
 .good { background:#16a34a; }
 .mid { background:#eab308; }
 .low { background:#ef4444; }
+.new { background:#3b82f6; }
 </style>
 </head>
 <body>
@@ -40,6 +40,7 @@ button { padding:6px 12px; border:none; border-radius:6px; cursor:pointer; }
 <th>Volume</th>
 <th>Change</th>
 <th>Score</th>
+<th>Tag</th>
 </tr>
 </thead>
 <tbody id="opps"></tbody>
@@ -98,31 +99,21 @@ function autoTrade(token, price, score){
   if(score < 4) return;
 
   let tradeSizeUSD = balance * 0.05;
-  let quantity = tradeSizeUSD / price;
+  let qty = tradeSizeUSD / price;
   let win = Math.random() > 0.4;
 
   if(win){
     let sellPrice = price * (1.05 + Math.random()*0.05);
-    let profit = (sellPrice - price) * quantity;
+    let profit = (sellPrice - price) * qty;
     balance += profit;
-
-    log(`BUY ${token} | Qty: ${quantity.toFixed(4)} | Price: $${price.toFixed(6)}`);
-    log(`SELL ${token} | Qty: ${quantity.toFixed(4)} | Price: $${sellPrice.toFixed(6)} | PROFIT: +$${profit.toFixed(2)}`);
+    log(`BUY ${token} | ${qty.toFixed(4)} @ $${price.toFixed(6)}`);
+    log(`SELL ${token} | ${qty.toFixed(4)} @ $${sellPrice.toFixed(6)} | +$${profit.toFixed(2)}`);
   } else {
     let sellPrice = price * (0.95 - Math.random()*0.03);
-    let loss = (price - sellPrice) * quantity;
+    let loss = (price - sellPrice) * qty;
     balance -= loss;
-
-    log(`BUY ${token} | Qty: ${quantity.toFixed(4)} | Price: $${price.toFixed(6)}`);
-    log(`SELL ${token} | Qty: ${quantity.toFixed(4)} | Price: $${sellPrice.toFixed(6)} | LOSS: -$${loss.toFixed(2)}`);
-  }
-
-  document.getElementById('balance').innerText = balance.toFixed(2);
-} +$${profit.toFixed(2)}`);
-  } else {
-    let loss = tradeSize * (0.03 + Math.random()*0.05);
-    balance -= loss;
-    log(`LOSS ${token} -$${loss.toFixed(2)}`);
+    log(`BUY ${token} | ${qty.toFixed(4)} @ $${price.toFixed(6)}`);
+    log(`SELL ${token} | ${qty.toFixed(4)} @ $${sellPrice.toFixed(6)} | -$${loss.toFixed(2)}`);
   }
 
   document.getElementById('balance').innerText = balance.toFixed(2);
@@ -130,42 +121,72 @@ function autoTrade(token, price, score){
 
 async function fetchData(){
   try{
-    const res = await fetch("https://api.dexscreener.com/latest/dex/search/?q=SOL");
+    const res = await fetch("https://api.dexscreener.com/latest/dex/pairs/solana");
     const data = await res.json();
 
-    const pairs = data.pairs || [];
-    const tbody = document.getElementById('opps');
-    tbody.innerHTML = '';
+    let pairs = data.pairs || [];
+
+    // remove SOL base + dedupe by token address
+    let map = {};
+
+    pairs.forEach(p => {
+      if(p.baseToken.symbol === "SOL") return;
+
+      const addr = p.baseToken.address;
+      if(!map[addr]) map[addr] = p;
+    });
+
+    let unique = Object.values(map);
 
     let results = [];
 
-    pairs.forEach(p => {
+    unique.forEach(p => {
       const liq = p.liquidity?.usd || 0;
       const vol = p.volume?.h24 || 0;
       const change = p.priceChange?.h24 || 0;
 
       if(liq > 30000 && vol > 20000){
         const score = scoreToken(liq, vol, change);
-        results.push({p, liq, vol, change, score});
+
+        let ageTag = '';
+        if(p.pairCreatedAt){
+          let ageMs = Date.now() - p.pairCreatedAt;
+          if(ageMs < 2 * 60 * 60 * 1000){
+            ageTag = '<span class="badge new">NEW</span>';
+          }
+        }
+
+        results.push({p, liq, vol, change, score, ageTag});
       }
     });
 
     results.sort((a,b) => b.score - a.score);
 
-    results.slice(0,5).forEach(r => {
+    const tbody = document.getElementById('opps');
+    tbody.innerHTML = '';
+
+    results.slice(0,10).forEach(r => {
+      const name = r.p.baseToken.name + " (" + r.p.baseToken.symbol + ")";
+
       const row = `
       <tr>
-        <td>${r.p.baseToken.symbol}</td>
+        <td>${name}</td>
         <td>$${parseFloat(r.p.priceUsd).toFixed(6)}</td>
         <td>$${r.liq.toFixed(0)}</td>
         <td>$${r.vol.toFixed(0)}</td>
         <td>${r.change.toFixed(2)}%</td>
         <td>${scoreBadge(r.score)}</td>
+        <td>${r.ageTag}</td>
       </tr>`;
+
       tbody.innerHTML += row;
 
-      autoTrade(r.p.baseToken.symbol, r.p.priceUsd, r.score);
+      autoTrade(name, r.p.priceUsd, r.score);
     });
+
+    if(results.length === 0){
+      tbody.innerHTML = "<tr><td colspan='7'>No opportunities</td></tr>";
+    }
 
   }catch(e){
     console.log(e);
