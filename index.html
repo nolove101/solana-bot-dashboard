@@ -15,7 +15,7 @@ body{background:#07090c;color:#c4d4e4;font-family:'JetBrains Mono',monospace;fon
 .badge-demo{background:#0d2d18;color:#22c55e;border-color:#1a4a28;}
 #bot-badge{font-size:9px;color:#2a4a6a;display:flex;align-items:center;gap:5px;}
 .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
-.dot-red{background:#ef4444;}.dot-green{background:#22c55e;}
+.dot-red{background:#ef4444;} .dot-green{background:#22c55e;}
 .pulse{animation:blink 1.2s infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 .statsbar{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#0d1a26;border-bottom:1px solid #0d1a26;}
@@ -37,7 +37,7 @@ body{background:#07090c;color:#c4d4e4;font-family:'JetBrains Mono',monospace;fon
 .tok{padding:9px 14px;border-bottom:1px solid #0d1a26;}
 .tok:hover{background:#0b1520;}
 .tok.inpos{background:#061a0c;}
-.tok.hardblock{opacity:.45;}
+.tok.hardblock{opacity:.4;}
 .tok-r1{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
 .sym{font-size:13px;font-weight:700;color:#e2eaf4;}
 .chain-lbl{font-size:9px;color:#2a4a6a;margin-left:5px;}
@@ -142,7 +142,7 @@ body{background:#07090c;color:#c4d4e4;font-family:'JetBrains Mono',monospace;fon
         <span class="pill pill-a" id="watch-pill">0 WATCH</span>
       </div>
     </div>
-    <div id="feed-loading" class="loading-msg"><div class="spin"></div><span id="loading-txt">Connecting to Dexscreener API (boosted + trending + top gainers)...</span></div>
+    <div id="feed-loading" class="loading-msg"><div class="spin"></div><span id="loading-txt">Connecting to Dexscreener...</span></div>
     <div class="feed-scroll" id="token-feed" style="display:none;"></div>
   </div>
   <div class="right">
@@ -151,7 +151,7 @@ body{background:#07090c;color:#c4d4e4;font-family:'JetBrains Mono',monospace;fon
       <div class="ctrl-row">
         <button class="big-btn btn-start" id="start-btn" onclick="startBot()" disabled>&#9654; START BOT</button>
         <button class="big-btn btn-stop" id="stop-btn" onclick="stopBot()" disabled>&#9646;&#9646; STOP</button>
-        <button class="big-btn btn-fetch" id="fetch-btn" onclick="fetchAll()" title="Re-fetch live data">&#8635; FETCH</button>
+        <button class="big-btn btn-fetch" id="fetch-btn" onclick="manualFetch()" title="Re-fetch (bot keeps running)">&#8635; FETCH</button>
       </div>
       <div class="balance-disp">
         <span class="bal-lbl">Free Cash</span>
@@ -162,21 +162,24 @@ body{background:#07090c;color:#c4d4e4;font-family:'JetBrains Mono',monospace;fon
         <div class="param"><label>Max Open Trades</label><input id="p-max" type="number" value="3" min="1" max="10"></div>
         <div class="param"><label>Take Profit %</label><input id="p-tp" type="number" value="20" min="5" max="500"></div>
         <div class="param"><label>Stop Loss %</label><input id="p-sl" type="number" value="10" min="2" max="50"></div>
-        <div class="param"><label>Min Liq ($)</label><input id="p-liq" type="number" value="50000" min="10000" step="5000"></div>
+        <div class="param"><label>Min Liq ($)</label><input id="p-liq" type="number" value="50000" min="5000" step="5000"></div>
         <div class="param"><label>Min Vol5m ($)</label><input id="p-vol" type="number" value="20000" min="1000" step="1000"></div>
+        <div class="param"><label>Min Age (min)</label><input id="p-age-min" type="number" value="30" min="5" max="1440"></div>
+        <div class="param"><label>Max Age (min)</label><input id="p-age-max" type="number" value="1440" min="60" max="99999"></div>
       </div>
-      <div style="font-size:9px;color:#2a4a6a;margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px;">Chain filter</div>
+      <div style="font-size:9px;color:#2a4a6a;margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px;">Chain filter (affects feed + bot)</div>
       <div class="chain-filters" id="chain-filters">
-        <button class="cf-btn on" data-chain="all" onclick="toggleChain(this)">ALL</button>
-        <button class="cf-btn on" data-chain="ethereum" onclick="toggleChain(this)">ETH</button>
         <button class="cf-btn on" data-chain="solana" onclick="toggleChain(this)">SOL</button>
+        <button class="cf-btn on" data-chain="ethereum" onclick="toggleChain(this)">ETH</button>
         <button class="cf-btn on" data-chain="bsc" onclick="toggleChain(this)">BSC</button>
         <button class="cf-btn on" data-chain="base" onclick="toggleChain(this)">BASE</button>
         <button class="cf-btn on" data-chain="arbitrum" onclick="toggleChain(this)">ARB</button>
+        <button class="cf-btn on" data-chain="tron" onclick="toggleChain(this)">TRON</button>
+        <button class="cf-btn on" data-chain="sui" onclick="toggleChain(this)">SUI</button>
       </div>
       <div class="size-preview" id="size-preview">Trade size: $1,000.00 (10% of $10,000.00)</div>
       <div class="prog-bar"><div class="prog-fill" id="scan-prog"></div></div>
-      <div class="fetch-status" id="fetch-status">Fetching from multiple Dexscreener endpoints...</div>
+      <div class="fetch-status" id="fetch-status">Fetching from Dexscreener boosted + search endpoints...</div>
     </div>
     <div class="rsec">
       <div class="rtitle">Open Positions <span style="color:#2a4a6a;font-size:9px;">(demo)</span></div>
@@ -199,58 +202,77 @@ body{background:#07090c;color:#c4d4e4;font-family:'JetBrains Mono',monospace;fon
     </div>
   </div>
 </div>
-
 <script>
-/* ── STATE ── */
-var tokens=[], rawPairs=[], running=false, botInterval=null, refetchInterval=null, progInt=null, tickCount=0;
-var cash=10000, invested=0, realisedPnl=0, totalTrades=0, wins=0, losses=0, bestTrade=null;
+/* ══════════════════════════════════════
+   BLACKLIST — anchor tokens that flood
+   the feed but are not tradeable memes
+══════════════════════════════════════ */
+var BLACKLIST_SYMS={
+  'WETH':1,'WBNB':1,'WSOL':1,'SOL':1,'ETH':1,'BNB':1,'BTC':1,'WBTC':1,
+  'USDC':1,'USDT':1,'BUSD':1,'DAI':1,'USDD':1,'TUSD':1,'USDCE':1,
+  'WMATIC':1,'MATIC':1,'WAVAX':1,'AVAX':1,'OP':1,'ARB':1,'NEAR':1,
+  'LINK':1,'UNI':1,'AAVE':1,'CRV':1,'SUSHI':1,'1INCH':1,'CAKE':1,
+  'SUI':1,'APT':1,'INJ':1,'TIA':1,'JUP':1,'PYTH':1,'W':1,'ZRO':1,
+  'STRK':1,'MANTA':1,'ALT':1,'DYM':1,'PIXEL':1,'PORTAL':1,
+};
+
+var BLACKLIST_NAMES=['wrapped','usd coin','tether','binance usd','dai stablecoin','bridged'];
+
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+var rawPairs=[], tokens=[], running=false;
+var botInterval=null, progInt=null, refetchTimer=null;
+var tickCount=0, fetchBusy=false;
+var cash=10000, invested=0, realisedPnl=0;
+var totalTrades=0, wins=0, losses=0, bestTrade=null;
 var positions={}, logs=[];
-var enabledChains={all:true,ethereum:true,solana:true,bsc:true,base:true,arbitrum:true};
+var enabledChains={solana:true,ethereum:true,bsc:true,base:true,arbitrum:true,tron:true,sui:true};
 
 /* ── FORMAT ── */
 function fmtK(n){if(!n||isNaN(n))return'--';if(n>=1e9)return'$'+(n/1e9).toFixed(2)+'B';if(n>=1e6)return'$'+(n/1e6).toFixed(2)+'M';if(n>=1000)return'$'+(n/1000).toFixed(1)+'k';return'$'+n.toFixed(0);}
 function fmtP(p){if(!p||isNaN(p)||p===0)return'$0';var a=Math.abs(p);if(a<1e-8)return'$'+p.toExponential(3);if(a<0.000001)return'$'+p.toFixed(10);if(a<0.0001)return'$'+p.toFixed(8);if(a<0.01)return'$'+p.toFixed(6);if(a<1)return'$'+p.toFixed(4);return'$'+p.toFixed(3);}
 function fmtUSD(n){return'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function nowTs(){return new Date().toTimeString().slice(0,8);}
-function pctColor(v){return v>=0?'#22c55e':'#ef4444';}
 
 /* ── CHAIN FILTER ── */
 function toggleChain(btn){
   var ch=btn.getAttribute('data-chain');
-  if(ch==='all'){
-    var allOn=btn.classList.contains('on');
-    document.querySelectorAll('.cf-btn').forEach(function(b){allOn?b.classList.remove('on'):b.classList.add('on');enabledChains[b.getAttribute('data-chain')]=!allOn;});
-    enabledChains.all=!allOn;
-  } else {
-    btn.classList.toggle('on');
-    enabledChains[ch]=btn.classList.contains('on');
-  }
-  applyChainFilter();
-  renderFeed();
+  btn.classList.toggle('on');
+  enabledChains[ch]=btn.classList.contains('on');
+  applyFilters(); renderFeed();
 }
-function applyChainFilter(){
+function applyFilters(){
+  var ageMax=parseInt(document.getElementById('p-age-max').value)||1440;
   tokens=rawPairs.filter(function(t){
-    if(enabledChains.all)return true;
-    return enabledChains[t.chainId]||false;
+    if(!enabledChains[t.chainId])return false;
+    /* strip anchor/stable/blue-chip tokens */
+    if(BLACKLIST_SYMS[t.sym])return false;
+    var nameLow=(t.name||'').toLowerCase();
+    for(var i=0;i<BLACKLIST_NAMES.length;i++){if(nameLow.indexOf(BLACKLIST_NAMES[i])>=0)return false;}
+    /* age max filter */
+    if(t.ageMin>ageMax)return false;
+    return true;
   });
 }
 
-/* ── STRATEGY EVAL ── */
+/* ── STRATEGY ── */
 function evaluate(t){
   var minLiq=parseFloat(document.getElementById('p-liq').value)||50000;
   var minVol=parseFloat(document.getElementById('p-vol').value)||20000;
-  var liqOk=t.liq>=minLiq, volOk=t.vol5m>=minVol, ageOk=t.ageMin>=30;
-  var chgOk=t.chg5m>=10&&t.chg5m<=30, bpOk=t.buys>t.sells, walletOk=t.top<=20;
-  var hardBlock=t.liq<30000||t.ageMin<10||t.top>20||t.chg5m>100||(t.chg1h>200);
+  var ageMin=parseInt(document.getElementById('p-age-min').value)||30;
+  var liqOk=t.liq>=minLiq, volOk=t.vol5m>=minVol;
+  var ageOk=t.ageMin>=ageMin;
+  var chgOk=t.chg5m>=10&&t.chg5m<=30;
+  var bpOk=t.buys>t.sells;
+  var walletOk=t.top<=20;
+  var hardBlock=t.liq<30000||t.ageMin<10||t.top>20||t.chg5m>100||(t.chg1h>300);
   var pass=!hardBlock&&liqOk&&volOk&&ageOk&&chgOk&&bpOk&&walletOk;
   return{pass:pass,hardBlock:hardBlock,liqOk:liqOk,volOk:volOk,ageOk:ageOk,chgOk:chgOk,bpOk:bpOk,walletOk:walletOk};
 }
 
 /* ── TRADE SIZE ── */
-function getTradeSize(){
-  var pct=parseFloat(document.getElementById('p-size-pct').value)||10;
-  return Math.max(1,(cash-invested)*pct/100);
-}
+function getTradeSize(){var pct=parseFloat(document.getElementById('p-size-pct').value)||10;return Math.max(1,(cash-invested)*pct/100);}
 function updateSizePreview(){
   var pct=parseFloat(document.getElementById('p-size-pct').value)||10;
   var free=Math.max(0,cash-invested);
@@ -259,171 +281,151 @@ function updateSizePreview(){
 }
 
 /* ══════════════════════════════════════
-   DEXSCREENER FETCH STRATEGY
-   Uses multiple high-signal endpoints:
-   1. /token-boosts/top/v1   — actively promoted/boosted tokens (real momentum)
-   2. /token-boosts/latest/v1 — freshly boosted (new momentum)
-   3. /token-profiles/latest/v1 — latest token profiles (new listings with activity)
-   4. /latest/dex/tokens/{chain} — top pairs by volume per chain
-   Uses CORS proxy (allorigins) as fallback if direct fetch is blocked
+   FETCH STRATEGY
+   Target: meme/new tokens with momentum
+   Sources:
+   1. /token-boosts/top/v1    — boosted (paid promo = real attention)
+   2. /token-boosts/latest/v1 — newly boosted
+   3. /token-profiles/latest/v1 — fresh token profiles
+   4. Search terms: trending meme categories
+   5. CORS proxy fallback (allorigins.win)
+   
+   POST-FILTER (critical fixes):
+   - Strip WETH/WBNB/SOL/USDC/stable anchors
+   - Strip age > p-age-max
+   - Sort by vol5m DESC (hottest first)
 ══════════════════════════════════════ */
-
 var PROXY='https://api.allorigins.win/raw?url=';
 
-/* Endpoints that return token addresses we then batch-resolve */
-var BOOST_ENDPOINTS=[
-  'https://api.dexscreener.com/token-boosts/top/v1',
-  'https://api.dexscreener.com/token-boosts/latest/v1',
-  'https://api.dexscreener.com/token-profiles/latest/v1',
-];
-
-/* High-volume chain token addresses to seed the scanner */
-var SEED_TOKENS={
-  solana:[
-    'So11111111111111111111111111111111111111112',  /* WSOL — gets top SOL pairs */
-    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', /* USDC SOL */
-  ],
-  ethereum:[
-    '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', /* WETH */
-    '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', /* USDC */
-  ],
-  bsc:[
-    '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', /* WBNB */
-    '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', /* USDC BSC */
-  ],
-  base:[
-    '0x4200000000000000000000000000000000000006', /* WETH Base */
-  ],
-  arbitrum:[
-    '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', /* WETH ARB */
-  ],
-};
-
 async function tryFetch(url){
+  /* try direct first */
   try{
-    var r=await fetch(url,{headers:{'Accept':'application/json'}});
-    if(r.ok){var d=await r.json();return d;}
+    var r=await fetch(url,{headers:{'Accept':'application/json'},signal:AbortSignal.timeout(7000)});
+    if(r.ok)return await r.json();
   }catch(e){}
   /* fallback via allorigins proxy */
   try{
-    var r2=await fetch(PROXY+encodeURIComponent(url));
-    if(r2.ok){var d2=await r2.json();return d2;}
+    var r2=await fetch(PROXY+encodeURIComponent(url),{signal:AbortSignal.timeout(10000)});
+    if(r2.ok)return await r2.json();
   }catch(e){}
   return null;
 }
 
-async function fetchAll(){
-  document.getElementById('fetch-btn').disabled=true;
-  document.getElementById('start-btn').disabled=true;
-  document.getElementById('feed-loading').style.display='flex';
-  document.getElementById('feed-loading').innerHTML='<div class="spin"></div><span id="loading-txt">Fetching boosted + trending tokens...</span>';
-  document.getElementById('token-feed').style.display='none';
-  document.getElementById('fetch-status').textContent='Connecting to Dexscreener API...';
+/* Search terms specifically targeting new meme/degen tokens */
+var MEME_SEARCHES=[
+  'new','trending','pump','meme','cat','dog','pepe','frog',
+  'inu','shib','wojak','floki','bonk','moon','elon','based',
+];
+
+/* manualFetch is called by the button — does NOT stop the bot */
+function manualFetch(){
+  fetchData(false);
+}
+
+/* backgroundFetch is called by the refetch timer — silent, bot keeps running */
+function backgroundFetch(){
+  if(fetchBusy)return;
+  addLog('info','Background re-fetch started (bot stays running)...',null,'b');
+  fetchData(true);
+}
+
+async function fetchData(isBackground){
+  if(fetchBusy)return;
+  fetchBusy=true;
+
+  /* Only disable UI for foreground fetch */
+  if(!isBackground){
+    document.getElementById('fetch-btn').disabled=true;
+    if(!running)document.getElementById('start-btn').disabled=true;
+    document.getElementById('feed-loading').style.display='flex';
+    document.getElementById('feed-loading').innerHTML='<div class="spin"></div><span id="loading-txt">Fetching from Dexscreener API...</span>';
+    document.getElementById('token-feed').style.display='none';
+  }
+  document.getElementById('fetch-status').textContent='Fetching...';
   animProg();
 
-  var allPairAddresses=[];  /* {chainId, tokenAddress} */
-  var directPairs=[];       /* pairs already resolved */
+  var directPairs=[];
 
-  /* Step 1: Fetch boosted/profiled token addresses */
-  addLog('info','Fetching boosted tokens from Dexscreener...',null,'b');
-  for(var i=0;i<BOOST_ENDPOINTS.length;i++){
-    setLoadingTxt('Fetching endpoint '+(i+1)+'/'+BOOST_ENDPOINTS.length+'...');
-    var data=await tryFetch(BOOST_ENDPOINTS[i]);
-    if(data&&Array.isArray(data)){
-      data.forEach(function(item){
-        if(item.chainId&&item.tokenAddress){
-          allPairAddresses.push({chainId:item.chainId,addr:item.tokenAddress});
-        }
+  /* Stage 1: Boosted tokens (most reliable momentum signal) */
+  setStatus('Fetching boosted tokens...');
+  var boostEndpoints=[
+    'https://api.dexscreener.com/token-boosts/top/v1',
+    'https://api.dexscreener.com/token-boosts/latest/v1',
+    'https://api.dexscreener.com/token-profiles/latest/v1',
+  ];
+  var tokenAddrs=[];
+  for(var i=0;i<boostEndpoints.length;i++){
+    var bd=await tryFetch(boostEndpoints[i]);
+    if(bd&&Array.isArray(bd)){
+      bd.forEach(function(item){
+        if(item.chainId&&item.tokenAddress)tokenAddrs.push({chain:item.chainId,addr:item.tokenAddress});
       });
-      addLog('info','Endpoint '+(i+1)+': got '+data.length+' token refs',null,'b');
     }
   }
 
-  /* Step 2: Fetch top pairs per chain (high volume anchor tokens) */
-  var chains=Object.keys(SEED_TOKENS);
-  for(var ci=0;ci<chains.length;ci++){
-    var chain=chains[ci];
-    var addrs=SEED_TOKENS[chain];
-    for(var ai=0;ai<addrs.length;ai++){
-      setLoadingTxt('Fetching '+chain.toUpperCase()+' top pairs...');
-      var url='https://api.dexscreener.com/latest/dex/tokens/'+addrs[ai];
-      var res=await tryFetch(url);
-      if(res&&res.pairs){
-        /* Sort by 5m volume descending — highest momentum first */
-        var sorted=res.pairs.slice().sort(function(a,b){
-          var va=a.volume&&a.volume.m5?parseFloat(a.volume.m5):0;
-          var vb=b.volume&&b.volume.m5?parseFloat(b.volume.m5):0;
-          return vb-va;
-        });
-        /* Take top 30 per anchor */
-        sorted.slice(0,30).forEach(function(p){directPairs.push(p);});
-      }
-    }
-  }
-
-  /* Step 3: Batch-resolve boosted token addresses (max 200 tokens) */
-  var unique={};
-  allPairAddresses.forEach(function(x){
-    var k=x.chainId+'_'+x.addr;
-    if(!unique[k])unique[k]=x;
-  });
-  var uniqueList=Object.values(unique).slice(0,200);
-
-  /* Group by chain and batch */
+  /* Stage 2: Resolve boosted token addresses to pairs (batched by chain) */
   var byChain={};
-  uniqueList.forEach(function(x){
-    if(!byChain[x.chainId])byChain[x.chainId]=[];
-    byChain[x.chainId].push(x.addr);
+  tokenAddrs.forEach(function(x){
+    if(!byChain[x.chain])byChain[x.chain]=[];
+    if(byChain[x.chain].indexOf(x.addr)<0)byChain[x.chain].push(x.addr);
   });
-
   var chainKeys=Object.keys(byChain);
   for(var ck=0;ck<chainKeys.length;ck++){
     var cname=chainKeys[ck];
-    var addrList=byChain[cname];
-    /* Dexscreener allows comma-separated addresses */
-    var batches=[];
-    for(var b=0;b<addrList.length;b+=30){batches.push(addrList.slice(b,b+30));}
-    for(var bi=0;bi<batches.length;bi++){
-      setLoadingTxt('Resolving '+cname+' batch '+(bi+1)+'/'+batches.length+'...');
-      var burl='https://api.dexscreener.com/latest/dex/tokens/'+batches[bi].join(',');
+    var addrs=byChain[cname];
+    for(var b=0;b<addrs.length;b+=30){
+      setStatus('Resolving '+cname+' boosted pairs (batch '+(Math.floor(b/30)+1)+')...');
+      var burl='https://api.dexscreener.com/latest/dex/tokens/'+addrs.slice(b,b+30).join(',');
       var bres=await tryFetch(burl);
-      if(bres&&bres.pairs){
-        bres.pairs.forEach(function(p){directPairs.push(p);});
-      }
+      if(bres&&bres.pairs)bres.pairs.forEach(function(p){directPairs.push(p);});
     }
   }
 
-  /* Step 4: Also search trending terms on Dexscreener */
-  var trendTerms=['trending','gainers','pump','new'];
-  for(var ti=0;ti<trendTerms.length;ti++){
-    setLoadingTxt('Searching "'+trendTerms[ti]+'" pairs...');
-    var tres=await tryFetch('https://api.dexscreener.com/latest/dex/search?q='+trendTerms[ti]);
-    if(tres&&tres.pairs){tres.pairs.forEach(function(p){directPairs.push(p);});}
+  /* Stage 3: Meme/trending searches — these return pairs directly */
+  var searchTerms=MEME_SEARCHES.slice(0,8); /* pick first 8 */
+  for(var si=0;si<searchTerms.length;si++){
+    setStatus('Searching "'+searchTerms[si]+'"...');
+    var sres=await tryFetch('https://api.dexscreener.com/latest/dex/search?q='+searchTerms[si]);
+    if(sres&&sres.pairs)sres.pairs.forEach(function(p){directPairs.push(p);});
   }
 
-  addLog('info','Total raw pairs collected: '+directPairs.length,null,'b');
-
   if(directPairs.length===0){
-    showCorsFallback();
+    fetchBusy=false;
+    if(!isBackground){
+      showCorsFallback();
+    }else{
+      addLog('warn','Background re-fetch failed (CORS?). Using existing data.',null,'a');
+      document.getElementById('fetch-btn').disabled=false;
+    }
     return;
   }
 
-  processPairs(directPairs);
+  processPairs(directPairs, isBackground);
 }
 
-function setLoadingTxt(t){
+function setStatus(msg){
+  document.getElementById('fetch-status').textContent=msg;
   var el=document.getElementById('loading-txt');
-  if(el)el.textContent=t;
-  document.getElementById('fetch-status').textContent=t;
+  if(el)el.textContent=msg;
 }
 
-function processPairs(pairs){
+function processPairs(pairs, isBackground){
+  var ageMaxParam=parseInt(document.getElementById('p-age-max').value)||1440;
+
   /* Deduplicate by pairAddress */
   var seen={}, out=[];
   pairs.forEach(function(p){
     if(!p||!p.baseToken||!p.pairAddress)return;
     if(seen[p.pairAddress])return;
     seen[p.pairAddress]=1;
+
+    var sym=(p.baseToken.symbol||'?').toUpperCase();
+    var name=(p.baseToken.name||sym);
+
+    /* ── PRE-FILTER: strip anchor/stable tokens ── */
+    if(BLACKLIST_SYMS[sym])return;
+    var nameLow=name.toLowerCase();
+    for(var ni=0;ni<BLACKLIST_NAMES.length;ni++){if(nameLow.indexOf(BLACKLIST_NAMES[ni])>=0)return;}
 
     var price=parseFloat(p.priceUsd)||0;
     if(price<=0)return;
@@ -435,12 +437,16 @@ function processPairs(pairs){
     var chg5m=p.priceChange&&p.priceChange.m5!=null?parseFloat(p.priceChange.m5):0;
     var chg1h=p.priceChange&&p.priceChange.h1!=null?parseFloat(p.priceChange.h1):0;
     var chg24h=p.priceChange&&p.priceChange.h24!=null?parseFloat(p.priceChange.h24):0;
-    var ageMin=p.pairCreatedAt?Math.max(0,(Date.now()-p.pairCreatedAt)/60000):9999;
+    var ageMin=p.pairCreatedAt?Math.max(0,(Date.now()-p.pairCreatedAt)/60000):99999;
+
+    /* ── Pre-filter age ── */
+    if(ageMin>ageMaxParam)return;
+
     var txns=p.txns&&p.txns.m5?p.txns.m5:{buys:0,sells:0};
-    var sym=(p.baseToken.symbol||'?').toUpperCase();
+    var txns1h=p.txns&&p.txns.h1?p.txns.h1:{buys:0,sells:0};
 
     out.push({
-      sym:sym, name:p.baseToken.name||sym,
+      sym:sym, name:name,
       chainId:p.chainId||'',
       chain:(p.chainId||'')+' * '+(p.dexId||''),
       price:price, liq:liq,
@@ -448,6 +454,7 @@ function processPairs(pairs){
       chg5m:chg5m, chg1h:chg1h, chg24h:chg24h,
       ageMin:ageMin,
       buys:txns.buys||0, sells:txns.sells||0,
+      buys1h:txns1h.buys||0, sells1h:txns1h.sells||0,
       top:Math.floor(Math.random()*20)+2,
       mcap:p.fdv||p.marketCap||0,
       url:p.url||'https://dexscreener.com',
@@ -456,23 +463,32 @@ function processPairs(pairs){
     });
   });
 
-  /* Sort by 5m volume descending so hottest tokens are at top */
+  /* Sort by vol5m DESC — hottest momentum at top */
   out.sort(function(a,b){return b.vol5m-a.vol5m;});
 
   rawPairs=out;
-  applyChainFilter();
+  applyFilters();
 
   var passCount=tokens.filter(function(t){return evaluate(t).pass;}).length;
+  var msg='Loaded '+tokens.length+' pairs (filtered, sorted vol5m) -- '+passCount+' pass strategy';
+
   document.getElementById('s-fetched').textContent=tokens.length;
   document.getElementById('s-fetchtime').textContent=nowTs();
-  document.getElementById('fetch-status').textContent='Loaded '+tokens.length+' pairs (sorted by vol5m) -- '+passCount+' pass strategy';
-  document.getElementById('feed-title').textContent='Live Dexscreener Feed -- '+tokens.length+' pairs, sorted by 5m volume';
-  document.getElementById('feed-loading').style.display='none';
-  document.getElementById('token-feed').style.display='block';
-  document.getElementById('start-btn').disabled=false;
+  document.getElementById('fetch-status').textContent=msg;
+  document.getElementById('feed-title').textContent='Live Feed -- '+tokens.length+' meme/degen pairs -- '+passCount+' PASS';
+
+  if(!isBackground){
+    document.getElementById('feed-loading').style.display='none';
+    document.getElementById('token-feed').style.display='block';
+    if(!running)document.getElementById('start-btn').disabled=false;
+  }
+
   document.getElementById('fetch-btn').disabled=false;
-  addLog('info','LIVE: '+tokens.length+' pairs loaded, sorted by vol5m. '+passCount+' pass all filters.',null,'b');
+  fetchBusy=false;
+
+  addLog('info',(isBackground?'[REFETCH] ':'')+'Loaded '+tokens.length+' pairs (raw '+rawPairs.length+') | age<'+ageMaxParam+'m | '+passCount+' pass filters',null,'b');
   renderFeed();
+
   scheduleRefetch();
 }
 
@@ -480,83 +496,81 @@ function showCorsFallback(){
   document.getElementById('feed-loading').innerHTML=
     '<div class="info-box">'+
     '<strong>Cannot reach Dexscreener API</strong><br><br>'+
-    'Both direct fetch and CORS proxy failed. This happens when:<br>'+
-    '&#8226; Opening file directly in browser (<code>file://</code>)<br>'+
-    '&#8226; Strict browser security settings<br><br>'+
-    '<strong>Fix -- deploy to GitHub Pages (2 min, free):</strong><br>'+
-    '1. Create GitHub repo, e.g. <code>dexbot</code><br>'+
-    '2. Upload this file as <code>index.html</code><br>'+
-    '3. Settings &rarr; Pages &rarr; Deploy from branch &rarr; main<br>'+
-    '4. Open <code>https://yourusername.github.io/dexbot</code><br><br>'+
-    'Loading mock data for now...<br>'+
+    'CORS is blocking direct API calls from <code>file://</code>.<br><br>'+
+    '<strong>Deploy to GitHub Pages (free, 2 min):</strong><br>'+
+    '1. Create repo, upload this as <code>index.html</code><br>'+
+    '2. Settings &rarr; Pages &rarr; Deploy from branch<br>'+
+    '3. Visit <code>yourusername.github.io/reponame</code><br><br>'+
+    'Loading mock data...<br>'+
     '</div>';
   setTimeout(loadMockData,1500);
 }
 
 function scheduleRefetch(){
-  clearInterval(refetchInterval);
-  refetchInterval=setInterval(function(){
-    if(running){addLog('info','Auto re-fetching Dexscreener data...',null,'b');fetchAll();}
-  },90000); /* re-fetch every 90s while bot is running */
+  clearInterval(refetchTimer);
+  /* Re-fetch every 90 seconds silently in background */
+  refetchTimer=setInterval(backgroundFetch,90000);
 }
 
-/* ── MOCK DATA (fallback) ── */
+/* ── MOCK DATA ── */
 function loadMockData(){
   rawPairs=[
-    {sym:'BONK',name:'Bonk',chainId:'solana',chain:'solana * raydium',price:0.0000231,liq:12000000,vol5m:1890000,vol1h:8400000,vol24h:42000000,chg5m:14.2,chg1h:7.4,chg24h:18.9,ageMin:600,buys:1200,sells:540,top:4,mcap:1800000000,url:'https://dexscreener.com',pairAddress:'mock1',isLive:false},
-    {sym:'WIF',name:'dogwifhat',chainId:'solana',chain:'solana * raydium',price:2.341,liq:28000000,vol5m:1240000,vol1h:6200000,vol24h:31000000,chg5m:11.8,chg1h:5.2,chg24h:14.3,ageMin:2880,buys:980,sells:420,top:6,mcap:2340000000,url:'https://dexscreener.com',pairAddress:'mock2',isLive:false},
-    {sym:'PEPE',name:'Pepe',chainId:'ethereum',chain:'ethereum * uniswap-v3',price:0.000012,liq:8200000,vol5m:920000,vol1h:4600000,vol24h:23000000,chg5m:14.2,chg1h:8.1,chg24h:22.3,ageMin:1440,buys:340,sells:180,top:6,mcap:5100000000,url:'https://dexscreener.com',pairAddress:'mock3',isLive:false},
-    {sym:'FLOKI',name:'Floki',chainId:'bsc',chain:'bsc * pancakeswap',price:0.000182,liq:2100000,vol5m:820000,vol1h:4100000,vol24h:20500000,chg5m:21.4,chg1h:13.2,chg24h:35.7,ageMin:480,buys:420,sells:190,top:12,mcap:1820000000,url:'https://dexscreener.com',pairAddress:'mock4',isLive:false},
-    {sym:'BRETT',name:'Brett',chainId:'base',chain:'base * uniswap-v3',price:0.1073,liq:18000000,vol5m:740000,vol1h:3700000,vol24h:18500000,chg5m:12.7,chg1h:6.8,chg24h:19.4,ageMin:720,buys:560,sells:240,top:8,mcap:1073000000,url:'https://dexscreener.com',pairAddress:'mock5',isLive:false},
-    {sym:'TURBO',name:'Turbo',chainId:'ethereum',chain:'ethereum * uniswap-v3',price:0.000247,liq:320000,vol5m:454000,vol1h:2270000,vol24h:11350000,chg5m:16.3,chg1h:9.8,chg24h:25.1,ageMin:180,buys:312,sells:140,top:8,mcap:247000000,url:'https://dexscreener.com',pairAddress:'mock6',isLive:false},
-    {sym:'MOG',name:'Mog Coin',chainId:'ethereum',chain:'ethereum * uniswap-v2',price:0.000001847,liq:4100000,vol5m:380000,vol1h:1900000,vol24h:9500000,chg5m:18.9,chg1h:11.2,chg24h:28.4,ageMin:960,buys:480,sells:210,top:9,mcap:741000000,url:'https://dexscreener.com',pairAddress:'mock7',isLive:false},
-    {sym:'DEGEN',name:'Degen',chainId:'base',chain:'base * uniswap-v3',price:0.00841,liq:6200000,vol5m:290000,vol1h:1450000,vol24h:7250000,chg5m:13.1,chg1h:7.2,chg24h:17.8,ageMin:1440,buys:380,sells:170,top:7,mcap:841000000,url:'https://dexscreener.com',pairAddress:'mock8',isLive:false},
-    {sym:'WOJAK',name:'Wojak',chainId:'ethereum',chain:'ethereum * uniswap-v3',price:0.0000087,liq:180000,vol5m:238000,vol1h:1190000,vol24h:5950000,chg5m:18.7,chg1h:11.2,chg24h:31.4,ageMin:220,buys:210,sells:88,top:11,mcap:8700000,url:'https://dexscreener.com',pairAddress:'mock9',isLive:false},
-    {sym:'POPCAT',name:'Popcat',chainId:'solana',chain:'solana * raydium',price:0.8341,liq:9800000,vol5m:210000,vol1h:1050000,vol24h:5250000,chg5m:10.4,chg1h:5.8,chg24h:13.2,ageMin:1440,buys:310,sells:140,top:5,mcap:834100000,url:'https://dexscreener.com',pairAddress:'mock10',isLive:false},
-    /* Rugs -- should be blocked */
-    {sym:'MOON100X',name:'Moon100x',chainId:'bsc',chain:'bsc * pancakeswap',price:0.00741,liq:17000,vol5m:5000,vol1h:25000,vol24h:125000,chg5m:220,chg1h:140,chg24h:500,ageMin:5,buys:1200,sells:20,top:72,mcap:741000,url:'https://dexscreener.com',pairAddress:'mock11',isLive:false},
-    {sym:'RUGPULL',name:'Rugpull',chainId:'bsc',chain:'bsc * pancakeswap',price:0.0000001,liq:8000,vol5m:2000,vol1h:10000,vol24h:50000,chg5m:450,chg1h:280,chg24h:900,ageMin:3,buys:3000,sells:5,top:88,mcap:100000,url:'https://dexscreener.com',pairAddress:'mock12',isLive:false},
-    {sym:'NEWRUG',name:'NewRug',chainId:'ethereum',chain:'ethereum * uniswap-v2',price:0.0000002,liq:22000,vol5m:8000,vol1h:40000,vol24h:200000,chg5m:88.2,chg1h:55.1,chg24h:120,ageMin:7,buys:900,sells:30,top:55,mcap:200000,url:'https://dexscreener.com',pairAddress:'mock13',isLive:false},
+    {sym:'BONK',name:'Bonk',chainId:'solana',chain:'solana * raydium',price:0.0000231,liq:12000000,vol5m:1890000,vol1h:8400000,vol24h:42000000,chg5m:14.2,chg1h:7.4,chg24h:18.9,ageMin:600,buys:1200,sells:540,buys1h:4800,sells1h:2100,top:4,mcap:1800000000,url:'https://dexscreener.com',pairAddress:'mock1',isLive:false},
+    {sym:'WIF',name:'dogwifhat',chainId:'solana',chain:'solana * raydium',price:2.341,liq:28000000,vol5m:1240000,vol1h:6200000,vol24h:31000000,chg5m:11.8,chg1h:5.2,chg24h:14.3,ageMin:720,buys:980,sells:420,buys1h:3900,sells1h:1700,top:6,mcap:2340000000,url:'https://dexscreener.com',pairAddress:'mock2',isLive:false},
+    {sym:'PEPE',name:'Pepe',chainId:'ethereum',chain:'ethereum * uniswap-v3',price:0.000012,liq:8200000,vol5m:920000,vol1h:4600000,vol24h:23000000,chg5m:14.2,chg1h:8.1,chg24h:22.3,ageMin:1440,buys:340,sells:180,buys1h:1360,sells1h:720,top:6,mcap:5100000000,url:'https://dexscreener.com',pairAddress:'mock3',isLive:false},
+    {sym:'FLOKI',name:'Floki',chainId:'bsc',chain:'bsc * pancakeswap',price:0.000182,liq:2100000,vol5m:820000,vol1h:4100000,vol24h:20500000,chg5m:21.4,chg1h:13.2,chg24h:35.7,ageMin:480,buys:420,sells:190,buys1h:1680,sells1h:760,top:12,mcap:1820000000,url:'https://dexscreener.com',pairAddress:'mock4',isLive:false},
+    {sym:'BRETT',name:'Brett',chainId:'base',chain:'base * uniswap-v3',price:0.1073,liq:18000000,vol5m:740000,vol1h:3700000,vol24h:18500000,chg5m:12.7,chg1h:6.8,chg24h:19.4,ageMin:720,buys:560,sells:240,buys1h:2240,sells1h:960,top:8,mcap:1073000000,url:'https://dexscreener.com',pairAddress:'mock5',isLive:false},
+    {sym:'TURBO',name:'Turbo',chainId:'ethereum',chain:'ethereum * uniswap-v3',price:0.000247,liq:320000,vol5m:454000,vol1h:2270000,vol24h:11350000,chg5m:16.3,chg1h:9.8,chg24h:25.1,ageMin:180,buys:312,sells:140,buys1h:1248,sells1h:560,top:8,mcap:247000000,url:'https://dexscreener.com',pairAddress:'mock6',isLive:false},
+    {sym:'MOG',name:'Mog Coin',chainId:'ethereum',chain:'ethereum * uniswap-v2',price:0.000001847,liq:4100000,vol5m:380000,vol1h:1900000,vol24h:9500000,chg5m:18.9,chg1h:11.2,chg24h:28.4,ageMin:960,buys:480,sells:210,buys1h:1920,sells1h:840,top:9,mcap:741000000,url:'https://dexscreener.com',pairAddress:'mock7',isLive:false},
+    {sym:'POPCAT',name:'Popcat',chainId:'solana',chain:'solana * raydium',price:0.8341,liq:9800000,vol5m:310000,vol1h:1550000,vol24h:7750000,chg5m:10.4,chg1h:5.8,chg24h:13.2,ageMin:1440,buys:310,sells:140,buys1h:1240,sells1h:560,top:5,mcap:834100000,url:'https://dexscreener.com',pairAddress:'mock8',isLive:false},
+    {sym:'NEWDOG',name:'New Dog',chainId:'solana',chain:'solana * raydium',price:0.00000842,liq:68000,vol5m:34000,vol1h:170000,vol24h:850000,chg5m:22.7,chg1h:14.1,chg24h:38.4,ageMin:47,buys:220,sells:90,buys1h:880,sells1h:360,top:14,mcap:8420,url:'https://dexscreener.com',pairAddress:'mock9',isLive:false},
+    {sym:'CATGPT',name:'CatGPT',chainId:'base',chain:'base * uniswap-v3',price:0.0000341,liq:74000,vol5m:28000,vol1h:140000,vol24h:700000,chg5m:15.8,chg1h:9.3,chg24h:24.1,ageMin:63,buys:185,sells:82,buys1h:740,sells1h:328,top:16,mcap:34100,url:'https://dexscreener.com',pairAddress:'mock10',isLive:false},
+    /* rugs */
+    {sym:'MOON100X',name:'Moon100x',chainId:'bsc',chain:'bsc * pancakeswap',price:0.00741,liq:17000,vol5m:5000,vol1h:25000,vol24h:125000,chg5m:220,chg1h:140,chg24h:500,ageMin:5,buys:1200,sells:20,buys1h:4800,sells1h:80,top:72,mcap:741000,url:'https://dexscreener.com',pairAddress:'mock11',isLive:false},
+    {sym:'RUGPULL',name:'Rugpull',chainId:'bsc',chain:'bsc * pancakeswap',price:0.0000001,liq:8000,vol5m:2000,vol1h:10000,vol24h:50000,chg5m:450,chg1h:280,chg24h:900,ageMin:3,buys:3000,sells:5,buys1h:12000,sells1h:20,top:88,mcap:100000,url:'https://dexscreener.com',pairAddress:'mock12',isLive:false},
   ];
-  applyChainFilter();
+  applyFilters();
   var pc=tokens.filter(function(t){return evaluate(t).pass;}).length;
   document.getElementById('s-fetched').textContent=tokens.length+' (mock)';
   document.getElementById('s-fetchtime').textContent=nowTs();
-  document.getElementById('fetch-status').textContent='Mock: '+tokens.length+' pairs. Deploy to GitHub Pages for live data.';
-  document.getElementById('feed-title').textContent='Mock Feed -- Deploy to GitHub Pages for live Dexscreener data';
+  document.getElementById('fetch-status').textContent='Mock data -- deploy to GitHub Pages for live data';
+  document.getElementById('feed-title').textContent='Mock Feed -- '+tokens.length+' pairs -- '+pc+' PASS';
   document.getElementById('feed-loading').style.display='none';
   document.getElementById('token-feed').style.display='block';
-  document.getElementById('start-btn').disabled=false;
+  if(!running)document.getElementById('start-btn').disabled=false;
   document.getElementById('fetch-btn').disabled=false;
-  addLog('warn','CORS blocked -- loaded mock data. Deploy to GitHub Pages for live data.',null,'a');
+  fetchBusy=false;
+  addLog('warn','CORS blocked -- mock data loaded. Deploy to GitHub Pages for live Dexscreener data.',null,'a');
   renderFeed();
   scheduleRefetch();
 }
 
-/* ── BOT ── */
+/* ══════════════════════════════════════
+   BOT LOGIC — fetch never stops the bot
+══════════════════════════════════════ */
 function startBot(){
   if(running||!tokens.length)return;
   running=true;
   document.getElementById('start-btn').disabled=true;
   document.getElementById('stop-btn').disabled=false;
-  document.getElementById('fetch-btn').disabled=true;
-  document.getElementById('sdot').className='dot dot-green pulse';
   document.getElementById('bot-badge').innerHTML='<span class="dot dot-green pulse"></span>RUNNING';
-  addLog('info','Bot started -- Safe Momentum + Liquidity Filter',null,'b');
+  addLog('info','Bot started -- Safe Momentum strategy active',null,'b');
   botTick();
   botInterval=setInterval(botTick,4000);
 }
+
 function stopBot(){
   if(!running)return;
   running=false;
-  clearInterval(botInterval);clearInterval(refetchInterval);
+  clearInterval(botInterval);
+  clearInterval(refetchTimer);
   document.getElementById('start-btn').disabled=false;
   document.getElementById('stop-btn').disabled=true;
-  document.getElementById('fetch-btn').disabled=false;
   document.getElementById('bot-badge').innerHTML='<span class="dot dot-red"></span>STOPPED';
   addLog('info','Bot stopped -- closing all positions',null,'r');
   closeAll();
 }
+
 function closeAll(){
   Object.keys(positions).forEach(function(pa){
     var pos=positions[pa];
@@ -566,10 +580,11 @@ function closeAll(){
     realisedPnl+=pnl;cash+=pos.size+pnl;invested=Math.max(0,invested-pos.size);
     totalTrades++;
     if(pnl>0){wins++;if(!bestTrade||pnl>bestTrade)bestTrade=pnl;}else losses++;
-    addLog('sell','CLOSE '+pos.sym+' @ '+fmtP(ep)+' (stopped)',pnl);
+    addLog('sell','CLOSE '+pos.sym+' @ '+fmtP(ep)+' (bot stopped)',pnl);
   });
   positions={};updateStats();renderPositions();
 }
+
 function botTick(){
   tickCount++;
   driftPrices();checkExits();
@@ -581,15 +596,17 @@ function botTick(){
   if(openCount<maxOpen&&(cash-invested)>=Math.max(size,1)){
     var candidates=tokens.filter(function(t){return evaluate(t).pass&&!positions[t.pairAddress];});
     if(candidates.length>0){
+      /* pick randomly from top 5 candidates to avoid always buying same */
       var pick=candidates[Math.floor(Math.random()*Math.min(candidates.length,5))];
       buyToken(pick,size);
     }else{
       var pc=tokens.filter(function(t){return evaluate(t).pass;}).length;
-      addLog('skip','Scanned '+tokens.length+' pairs | '+pc+' pass | '+(openCount>=maxOpen?'max positions open':'no new entries'),null,'d');
+      addLog('skip','Scan #'+tickCount+' | '+tokens.length+' pairs | '+pc+' pass | '+(openCount>=maxOpen?'max positions open':'no qualifying entries'),null,'d');
     }
   }
   renderFeed();renderPositions();updateStats();
 }
+
 function buyToken(t,size){
   var free=cash-invested;
   if(free<size||size<1)return;
@@ -597,8 +614,9 @@ function buyToken(t,size){
   positions[t.pairAddress]={entry:t.price,tokens:size/t.price,size:size,sym:t.sym,pairAddress:t.pairAddress,openedAt:nowTs()};
   totalTrades++;
   var pct=parseFloat(document.getElementById('p-size-pct').value)||10;
-  addLog('buy','BUY '+t.sym+' @ '+fmtP(t.price)+' | '+fmtUSD(size)+' ('+pct+'% cash) | liq:'+fmtK(t.liq)+' vol5m:'+fmtK(t.vol5m)+' age:'+Math.floor(t.ageMin)+'m chg5m:+'+t.chg5m.toFixed(1)+'% bp:'+t.buys+'/'+(t.buys+t.sells),null,'g');
+  addLog('buy','BUY '+t.sym+' @ '+fmtP(t.price)+' | '+fmtUSD(size)+' ('+pct+'%) | liq:'+fmtK(t.liq)+' vol5m:'+fmtK(t.vol5m)+' age:'+Math.floor(t.ageMin)+'m chg5m:+'+t.chg5m.toFixed(1)+'% buys:'+t.buys+'/'+t.sells,null,'g');
 }
+
 function checkExits(){
   var tp=parseFloat(document.getElementById('p-tp').value)||20;
   var sl=parseFloat(document.getElementById('p-sl').value)||10;
@@ -617,6 +635,7 @@ function checkExits(){
     }
   });
 }
+
 function driftPrices(){
   tokens.forEach(function(t){
     var d=(Math.random()-0.46)*0.01;
@@ -632,7 +651,7 @@ function driftPrices(){
 /* ── RENDER FEED ── */
 function renderFeed(){
   var el=document.getElementById('token-feed');
-  if(!tokens.length)return;
+  if(!tokens.length){el.innerHTML='<div style="padding:14px;font-size:9px;color:#2a4a6a;">No tokens match current filters.</div>';return;}
   var passed=0,blocked=0,watched=0;
   var html=tokens.map(function(t){
     var ev=evaluate(t);
@@ -640,8 +659,9 @@ function renderFeed(){
     var inPos=!!positions[t.pairAddress];
     var chipCls=ev.hardBlock?'chip-block':ev.pass?'chip-pass':'chip-watch';
     var chipTxt=ev.hardBlock?'RUG':ev.pass?'PASS':'WATCH';
-    var bp=t.buys+t.sells>0?((t.buys/(t.buys+t.sells))*100).toFixed(0):'--';
-    var chgColor=pctColor(t.chg5m);
+    var bp5m=t.buys+t.sells>0?((t.buys/(t.buys+t.sells))*100).toFixed(0):'--';
+    var chgColor=t.chg5m>=0?'#22c55e':'#ef4444';
+    var ageStr=t.ageMin<60?Math.floor(t.ageMin)+'m':t.ageMin<1440?(t.ageMin/60).toFixed(1)+'h':(t.ageMin/1440).toFixed(1)+'d';
     var failHtml='';
     if(!ev.pass){
       var fr=[];
@@ -649,17 +669,21 @@ function renderFeed(){
       if(t.ageMin<10)fr.push('Age&lt;10m');
       if(t.top>20)fr.push('Whale '+t.top+'%');
       if(t.chg5m>100)fr.push('Pump+'+t.chg5m.toFixed(0)+'%');
-      if(!ev.volOk)fr.push('Vol5m low');
-      if(!ev.chgOk&&!ev.hardBlock)fr.push('Chg '+t.chg5m.toFixed(1)+'%');
+      if(!ev.volOk)fr.push('Vol5m&lt;min');
+      if(!ev.chgOk&&!ev.hardBlock){
+        if(t.chg5m<10)fr.push('Chg5m only+'+t.chg5m.toFixed(1)+'%');
+        else fr.push('Chg5m too high+'+t.chg5m.toFixed(0)+'%');
+      }
       if(!ev.bpOk)fr.push('SellPressure');
-      if(!ev.liqOk&&t.liq>=30000)fr.push('Liq&lt;min');
+      if(!ev.liqOk&&t.liq>=30000)fr.push('Liq&lt;$'+Math.floor(parseFloat(document.getElementById('p-liq').value)/1000)+'k');
+      if(!ev.ageOk)fr.push('Age&lt;'+document.getElementById('p-age-min').value+'m');
       if(fr.length)failHtml='<div class="fail-reasons">'+fr.map(function(r){return'<span class="fr">'+r+'</span>';}).join('')+'</div>';
     }
     return'<div class="tok'+(inPos?' inpos':'')+(ev.hardBlock?' hardblock':'')+'" style="cursor:default;">'+
       '<div class="tok-r1">'+
       '<div><a href="'+t.url+'" target="_blank" rel="noopener" style="text-decoration:none;"><span class="sym">'+t.sym+'</span></a>'+
       '<span class="chain-lbl">'+t.chain+'</span>'+
-      '<span class="chip chip-live">LIVE</span>'+
+      '<span class="chip '+(t.isLive?'chip-live':'')+'" style="font-size:8px;padding:1px 4px;">'+(t.isLive?'LIVE':'MOCK')+'</span>'+
       (inPos?'<span class="chip chip-in">IN</span>':'')+
       '</div>'+
       '<div style="display:flex;align-items:center;gap:4px;">'+
@@ -671,8 +695,8 @@ function renderFeed(){
       '<div class="m"><span class="ml">Liq</span><span class="mv '+(ev.liqOk?'ok':t.liq>=30000?'warn':'bad')+'">'+fmtK(t.liq)+'</span></div>'+
       '<div class="m"><span class="ml">Vol5m</span><span class="mv '+(ev.volOk?'ok':'bad')+'">'+fmtK(t.vol5m)+'</span></div>'+
       '<div class="m"><span class="ml">Vol1h</span><span class="mv">'+fmtK(t.vol1h)+'</span></div>'+
-      '<div class="m"><span class="ml">Age</span><span class="mv '+(ev.ageOk?'ok':t.ageMin>=10?'warn':'bad')+'">'+Math.floor(t.ageMin)+'m</span></div>'+
-      '<div class="m"><span class="ml">Buy%</span><span class="mv '+(parseInt(bp)>55?'ok':parseInt(bp)<45?'bad':'warn')+'">'+bp+'%</span></div>'+
+      '<div class="m"><span class="ml">Age</span><span class="mv '+(ev.ageOk?'ok':t.ageMin>=10?'warn':'bad')+'">'+ageStr+'</span></div>'+
+      '<div class="m"><span class="ml">Buy%5m</span><span class="mv '+(parseInt(bp5m)>55?'ok':parseInt(bp5m)<45?'bad':'warn')+'">'+bp5m+'%</span></div>'+
       '<div class="m"><span class="ml">1h</span><span class="mv" style="color:'+(t.chg1h>=0?'#c4d4e4':'#ef4444')+'">'+(t.chg1h>=0?'+':'')+t.chg1h.toFixed(1)+'%</span></div>'+
       '<div class="m"><span class="ml">MCap</span><span class="mv">'+fmtK(t.mcap)+'</span></div>'+
       '</div>'+failHtml+'</div>';
@@ -737,13 +761,13 @@ function addLog(type,msg,pnl,col){
   var c=cm[col]||(type==='buy'?'#22c55e':type==='sell'?'#ef4444':type==='info'?'#38bdf8':'#2a4a6a');
   var icon={buy:'B',sell:'S',skip:'~',info:'i',warn:'!'}[type]||'.';
   logs.unshift({msg:msg,pnl:pnl,c:c,icon:icon,ts:nowTs()});
-  if(logs.length>400)logs.pop();
+  if(logs.length>500)logs.pop();
   renderLog();
 }
 function renderLog(){
   var el=document.getElementById('log-area');
   if(!logs.length){el.innerHTML='<div style="padding:10px;font-size:9px;color:#2a4a6a;">No activity</div>';return;}
-  el.innerHTML=logs.slice(0,150).map(function(l){
+  el.innerHTML=logs.slice(0,200).map(function(l){
     var ph=l.pnl!=null?'<span class="le-pnl '+(l.pnl>=0?'cg':'cr')+'">'+(l.pnl>=0?'+':'')+fmtUSD(Math.abs(l.pnl))+'</span>':'';
     return'<div class="log-entry"><span class="le-ts">'+l.ts+'</span><span class="le-icon" style="color:'+l.c+'">'+l.icon+'</span><span class="le-msg" style="color:'+l.c+'">'+l.msg+'</span>'+ph+'</div>';
   }).join('');
@@ -763,7 +787,7 @@ document.getElementById('clock-el').textContent=new Date().toTimeString().slice(
 
 /* ── INIT ── */
 updateSizePreview();
-fetchAll();
+fetchData(false);
 </script>
 </body>
 </html>
