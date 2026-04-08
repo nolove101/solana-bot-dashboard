@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Solana Alpha Finder PRO (Stable)</title>
+  <title>Solana Alpha Finder PRO FINAL</title>
   <style>
     body { font-family: Arial; background:#0b0f1a; color:#fff; padding:20px; }
     button { padding:10px; margin:5px; }
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-<h2>🚀 SOLANA ALPHA FINDER (PRO STABLE)</h2>
+<h2>🚀 SOLANA ALPHA FINDER (FINAL)</h2>
 
 <button onclick="start()">START</button>
 
@@ -24,10 +24,11 @@
 let demoBalance = 1000;
 let walletStats = {};
 
+// ✅ PROXY RPC (fix CORS + GitHub issue)
 let rpcList = [
-  "https://api.mainnet-beta.solana.com",
-  "https://rpc.ankr.com/solana",
-  "https://solana.public-rpc.com"
+  "https://corsproxy.io/?https://api.mainnet-beta.solana.com",
+  "https://corsproxy.io/?https://rpc.ankr.com/solana",
+  "https://corsproxy.io/?https://solana.public-rpc.com"
 ];
 
 let rpcIndex = 0;
@@ -41,14 +42,13 @@ function switchRPC() {
   rpcIndex = (rpcIndex + 1) % rpcList.length;
 }
 
-async function start() {
-  document.getElementById("summary").innerHTML = "🔄 Starting scan...";
-  await scan();
-  setInterval(scan, 15000);
-}
-
+// ✅ STABLE RPC CALL (timeout + retry + auto switch)
 async function rpcCall(method, params, retries = 2) {
   try {
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
     let res = await fetch(getRPC(), {
       method: "POST",
       headers: {"Content-Type": "application/json"},
@@ -57,8 +57,11 @@ async function rpcCall(method, params, retries = 2) {
         id: 1,
         method: method,
         params: params
-      })
+      }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeout);
 
     let data = await res.json();
 
@@ -78,6 +81,13 @@ async function rpcCall(method, params, retries = 2) {
   }
 }
 
+async function start() {
+  document.getElementById("summary").innerHTML = "🔄 Starting scan...";
+  await scan();
+  setInterval(scan, 15000);
+}
+
+// ✅ MAIN SCAN FUNCTION
 async function scan() {
 
   try {
@@ -93,7 +103,7 @@ async function scan() {
 
     for (let s of sigs) {
 
-      if (!s.signature) continue;
+      if (!s || !s.signature) continue;
 
       let txData = await rpcCall("getTransaction", [s.signature, "jsonParsed"]);
 
@@ -114,13 +124,13 @@ async function scan() {
 
       walletStats[wallet].trades++;
 
-      // stable simulated pnl
-      let pnl = (Math.sin(Date.now()/100000 + wallet.length) * 10);
+      // ✅ STABLE simulated PnL (not random spikes)
+      let pnl = Math.sin(Date.now()/100000 + wallet.length) * 10;
 
       walletStats[wallet].pnl += pnl;
       if (pnl > 0) walletStats[wallet].wins++;
 
-      // demo copy trade
+      // ✅ DEMO COPY TRADE
       let size = demoBalance * 0.05;
       demoBalance += size * (pnl / 100);
     }
@@ -132,6 +142,7 @@ async function scan() {
   }
 }
 
+// ✅ RANKING ENGINE
 function rank() {
 
   let ranked = [];
@@ -179,7 +190,7 @@ function rank() {
   document.getElementById("summary").innerHTML = `
     💰 Demo Balance: $${demoBalance.toFixed(2)}<br/>
     🔄 Auto scan every 15s<br/>
-    ⚡ Multi-RPC active
+    ⚡ Multi-RPC + Proxy active
   `;
 
   document.getElementById("wallets").innerHTML = html;
