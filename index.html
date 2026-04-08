@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Solana Alpha Finder FREE</title>
+  <title>Solana Alpha Finder (Live)</title>
   <style>
     body { font-family: Arial; background:#0b0f1a; color:#fff; padding:20px; }
-    input, button { padding:10px; margin:5px; }
+    button { padding:10px; margin:5px; }
     .card { background:#111827; padding:15px; margin-top:10px; border-radius:10px; }
     .green { color:#00ff9f; }
     .red { color:#ff4d4d; }
@@ -12,9 +12,9 @@
 </head>
 <body>
 
-<h2>🚀 SOLANA ALPHA FINDER (FREE - NO API)</h2>
+<h2>🚀 SOLANA ALPHA FINDER (LIVE)</h2>
 
-<button onclick="start()">START SCAN</button>
+<button onclick="start()">START</button>
 
 <div id="summary" class="card"></div>
 <div id="wallets"></div>
@@ -23,79 +23,59 @@
 
 let demoBalance = 1000;
 let walletStats = {};
+
+// public RPC (works on GitHub Pages)
 let rpc = "https://api.mainnet-beta.solana.com";
 
-async function start() {
-  document.getElementById("summary").innerHTML = "Scanning live network...";
+// Jupiter = high activity trading program
+let program = "JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB";
 
-  setInterval(scan, 20000);
+async function start() {
+  document.getElementById("summary").innerHTML = "🔄 Starting scan...";
   await scan();
+
+  setInterval(scan, 15000);
 }
 
-async function scan() {
-
-  // get recent signatures from Jupiter program (high activity)
-  let program = "JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB";
-
+async function rpcCall(method, params) {
   let res = await fetch(rpc, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
       jsonrpc: "2.0",
       id: 1,
-      method: "getSignaturesForAddress",
-      params: [program, {limit: 20}]
+      method: method,
+      params: params
     })
   });
+  return res.json();
+}
 
-  let data = await res.json();
-  let sigs = data.result;
+async function scan() {
 
-  for (let s of sigs) {
+  try {
 
-    let txRes = await fetch(rpc, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "getTransaction",
-        params: [s.signature, "jsonParsed"]
-      })
-    });
+    let sigData = await rpcCall("getSignaturesForAddress", [program, {limit: 8}]);
+    let sigs = sigData.result;
 
-    let txData = await txRes.json();
-    let tx = txData.result;
+    for (let s of sigs) {
 
-    if (!tx) continue;
+      let txData = await rpcCall("getTransaction", [s.signature, "jsonParsed"]);
+      let tx = txData.result;
 
-    let wallet = tx.transaction.message.accountKeys[0].pubkey;
+      if (!tx) continue;
 
-    if (!walletStats[wallet]) {
-      walletStats[wallet] = { trades: 0, wins: 0, pnl: 0 };
-    }
+      let wallet = tx.transaction.message.accountKeys[0].pubkey;
 
-    let instructions = tx.transaction.message.instructions;
-
-    for (let ins of instructions) {
-
-      if (!ins.parsed) continue;
-
-      let token = ins.parsed.info?.mint;
-      if (!token) continue;
-
-      // get token price
-      let priceRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token}`);
-      let priceData = await priceRes.json();
-
-      let price = priceData.pairs?.[0]?.priceUsd;
-      if (!price) continue;
-
-      // simulate movement (light realistic drift)
-      let future = price * (1 + (Math.random()*0.15 - 0.05));
-      let pnl = ((future - price)/price)*100;
+      if (!walletStats[wallet]) {
+        walletStats[wallet] = { trades: 0, wins: 0, pnl: 0 };
+      }
 
       walletStats[wallet].trades++;
+
+      // stable simulated PnL (not random spikes)
+      let pnl = (Math.sin(Date.now()/100000 + wallet.length) * 10);
+
       walletStats[wallet].pnl += pnl;
       if (pnl > 0) walletStats[wallet].wins++;
 
@@ -103,9 +83,12 @@ async function scan() {
       let size = demoBalance * 0.05;
       demoBalance += size * (pnl / 100);
     }
-  }
 
-  rank();
+    rank();
+
+  } catch (e) {
+    document.getElementById("summary").innerHTML = "⚠️ Error: " + e.message;
+  }
 }
 
 function rank() {
@@ -115,11 +98,10 @@ function rank() {
   for (let w in walletStats) {
 
     let d = walletStats[w];
-    if (d.trades < 5) continue;
+    if (d.trades < 3) continue;
 
     let winrate = (d.wins / d.trades) * 100;
     let avg = d.pnl / d.trades;
-
     let score = (winrate * 0.6) + (avg * 0.4);
 
     ranked.push({
@@ -143,7 +125,7 @@ function rank() {
 
     html += `
       <div class="card">
-        Wallet: ${w.wallet}<br/>
+        <b>${w.wallet.slice(0,6)}...${w.wallet.slice(-4)}</b><br/>
         Trades: ${w.trades}<br/>
         Winrate: <span class="${w.winrate>50?'green':'red'}">${w.winrate}%</span><br/>
         Avg PnL: <span class="${w.pnl>0?'green':'red'}">${w.pnl}%</span><br/>
@@ -155,8 +137,8 @@ function rank() {
 
   document.getElementById("summary").innerHTML = `
     💰 Demo Balance: $${demoBalance.toFixed(2)}<br/>
-    🔄 Live scan every 20s<br/>
-    ⚡ Source: Public Solana RPC
+    🔄 Auto updating every 15s<br/>
+    ⚡ Live Solana activity
   `;
 
   document.getElementById("wallets").innerHTML = html;
