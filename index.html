@@ -3,213 +3,200 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SDR/VDOR PumpSwap Bot</title>
+<title>PumpSwap Auto Bot</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#07090c;color:#c4d4e4;font-family:'JetBrains Mono',monospace;font-size:12px;min-height:100vh;}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:#050709;border-bottom:1px solid #0d1a26;position:sticky;top:0;z-index:100;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:9px 16px;background:#050709;border-bottom:1px solid #0d1a26;position:sticky;top:0;z-index:100;}
 .logo{font-size:14px;font-weight:700;color:#38bdf8;letter-spacing:.5px;}
 .logo span{color:#a855f7;}
-.badge{font-size:9px;padding:2px 8px;border-radius:3px;}
+.badge{font-size:9px;padding:2px 7px;border-radius:3px;}
 .badge-live{background:#001a2d;color:#38bdf8;border:1px solid #1a3a52;}
 .badge-demo{background:#0d2d18;color:#22c55e;border:1px solid #1a4a28;}
 .badge-pump{background:#1a0d2d;color:#a855f7;border:1px solid #3a1a52;}
 #bot-badge{font-size:9px;color:#2a4a6a;display:flex;align-items:center;gap:5px;}
 .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
-.dot-red{background:#ef4444;}.dot-green{background:#22c55e;}.dot-amber{background:#f59e0b;}
+.dot-red{background:#ef4444;}.dot-green{background:#22c55e;}
 .pulse{animation:blink 1.2s infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-
 .statsbar{display:grid;grid-template-columns:repeat(8,1fr);gap:1px;background:#0d1a26;border-bottom:1px solid #0d1a26;}
-.sbox{background:#07090c;padding:7px 10px;}
-.slbl{font-size:9px;color:#2a4a6a;letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px;}
+.sbox{background:#07090c;padding:6px 10px;}
+.slbl{font-size:9px;color:#2a4a6a;letter-spacing:.7px;text-transform:uppercase;margin-bottom:2px;}
 .sval{font-size:13px;font-weight:700;}
 .cg{color:#22c55e;}.cr{color:#ef4444;}.cb{color:#38bdf8;}.cw{color:#c4d4e4;}.ca{color:#f59e0b;}.cp{color:#a855f7;}
-
-.layout{display:grid;grid-template-columns:1fr 360px;min-height:calc(100vh - 108px);}
+.layout{display:grid;grid-template-columns:1fr 370px;min-height:calc(100vh - 106px);}
 .feed-col{border-right:1px solid #0d1a26;display:flex;flex-direction:column;}
-.col-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#050709;border-bottom:1px solid #0d1a26;position:sticky;top:55px;z-index:50;flex-wrap:wrap;gap:5px;}
+.col-hdr{display:flex;align-items:center;justify-content:space-between;padding:7px 13px;background:#050709;border-bottom:1px solid #0d1a26;position:sticky;top:53px;z-index:50;flex-wrap:wrap;gap:4px;}
 .col-lbl{font-size:9px;color:#2a4a6a;letter-spacing:1px;text-transform:uppercase;}
 .pill{font-size:9px;padding:2px 7px;border-radius:3px;}
 .pill-g{background:#0d2d18;color:#22c55e;border:1px solid #1a4a28;}
 .pill-a{background:#1a1800;color:#f59e0b;border:1px solid #3a2f00;}
-.pill-p{background:#1a0d2d;color:#a855f7;border:1px solid #3a1a52;}
+.pill-r{background:#2d0d0d;color:#ef4444;border:1px solid #4a1a1a;}
+.pill-b{background:#001a2d;color:#38bdf8;border:1px solid #1a3a52;}
 .feed-scroll{overflow-y:auto;flex:1;}
 .feed-scroll::-webkit-scrollbar{width:4px;background:#07090c;}
 .feed-scroll::-webkit-scrollbar-thumb{background:#0d1a26;}
-
-/* token card */
-.tok{padding:10px 14px;border-bottom:1px solid #0d1a26;transition:background .1s;}
-.tok:hover{background:#0b1520;}
-.tok.inpos{background:#061308 !important;border-left:2px solid #22c55e;}
-.tok.triggered{background:#0d0620 !important;border-left:2px solid #a855f7;}
-.tok-r1{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.tok{padding:10px 13px;border-bottom:1px solid #0d1a26;}
+.tok:hover{background:#0a0e14;}
+.tok.inpos{background:#060d08 !important;border-left:3px solid #22c55e;}
+.tok.triggered{border-left:3px solid #a855f7;}
+.tok-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
+.sym-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .sym{font-size:14px;font-weight:700;color:#e2eaf4;}
-.tok-meta{font-size:9px;color:#2a4a6a;margin-top:1px;}
+.dex-link{font-size:9px;padding:2px 7px;border-radius:3px;background:#001a2d;color:#38bdf8;border:1px solid #1a3a52;text-decoration:none;font-family:'JetBrains Mono',monospace;font-weight:500;white-space:nowrap;}
+.dex-link:hover{background:#0d2040;}
+.chain-lbl{font-size:9px;color:#2a4a6a;}
 .chip{font-size:9px;padding:2px 7px;border-radius:3px;font-weight:700;}
-.chip-buy{background:#0d2d18;color:#22c55e;border:1px solid #22c55e;}
+.chip-pass{background:#0d2d18;color:#22c55e;border:1px solid #1a4a28;}
 .chip-watch{background:#1a1800;color:#f59e0b;border:1px solid #3a2f00;}
-.chip-wait{background:#1a0d2d;color:#a855f7;border:1px solid #3a1a52;}
+.chip-fail{background:#2d0d0d;color:#ef4444;border:1px solid #4a1a1a;}
 .chip-in{background:#0a2d1a;color:#22c55e;border:1px solid #22c55e;}
-.metrics{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:5px;}
-.m{display:flex;flex-direction:column;gap:1px;}
-.ml{font-size:9px;color:#2a4a6a;text-transform:uppercase;}
+.metrics{display:flex;gap:10px;flex-wrap:wrap;margin:5px 0;}
+.m{display:flex;flex-direction:column;gap:1px;min-width:50px;}
+.ml{font-size:8px;color:#2a4a6a;text-transform:uppercase;letter-spacing:.5px;}
 .mv{font-size:11px;font-weight:500;color:#c4d4e4;}
 .mv.ok{color:#22c55e;}.mv.bad{color:#ef4444;}.mv.warn{color:#f59e0b;}
-
-/* volume progress bar toward 1M trigger */
-.vol-progress{margin-top:5px;}
-.vol-lbl{display:flex;justify-content:space-between;font-size:9px;margin-bottom:3px;}
-.vol-bar-bg{height:6px;background:#0d1a26;border-radius:3px;overflow:hidden;}
-.vol-bar-fill{height:6px;border-radius:3px;transition:width .4s;}
-.status-line{font-size:9px;margin-top:4px;padding:3px 6px;border-radius:3px;}
-.status-waiting{background:#1a0d2d;color:#a855f7;}
-.status-ready{background:#0d2d18;color:#22c55e;}
-.status-fail{background:#1a0800;color:#ef4444;}
-
-/* right panel */
-.right{display:flex;flex-direction:column;overflow:hidden;}
-.rsec{padding:10px 13px;border-bottom:1px solid #0d1a26;}
-.rtitle{font-size:9px;color:#2a4a6a;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
-.ctrl-row{display:flex;gap:6px;margin-bottom:8px;}
-.big-btn{flex:1;padding:9px 6px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;cursor:pointer;border-radius:4px;border:none;letter-spacing:.5px;transition:all .15s;}
+.status-line{font-size:9px;margin-top:5px;padding:3px 7px;border-radius:3px;line-height:1.5;}
+.sl-pass{background:#061a0c;color:#22c55e;border:1px solid #1a4a28;}
+.sl-watch{background:#1a1400;color:#f59e0b;border:1px solid #3a2800;}
+.sl-fail{background:#1a0606;color:#ef4444;border:1px solid #4a1010;}
+.sl-pos{background:#061308;color:#22c55e;border:1px solid #22c55e;}
+.fail-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
+.ftag{font-size:9px;padding:1px 6px;border-radius:2px;background:#2d0d0d;color:#ef4444;}
+.wtag{font-size:9px;padding:1px 6px;border-radius:2px;background:#1a1400;color:#f59e0b;}
+.right{display:flex;flex-direction:column;}
+.rsec{padding:9px 12px;border-bottom:1px solid #0d1a26;}
+.rtitle{font-size:9px;color:#2a4a6a;letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+.ctrl-row{display:flex;gap:5px;margin-bottom:7px;}
+.big-btn{flex:1;padding:8px 5px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;cursor:pointer;border-radius:4px;border:none;letter-spacing:.5px;transition:all .15s;}
 .big-btn:disabled{opacity:.3;cursor:not-allowed;}
 .big-btn:active:not(:disabled){transform:scale(.97);}
 .btn-start{background:#22c55e;color:#060e08;}
 .btn-stop{background:#ef4444;color:#fff;}
-.btn-fetch{background:#0d1a26;color:#38bdf8;border:1px solid #1a3a52;flex:0 0 auto;padding:9px 10px;}
+.btn-fetch{background:#0d1a26;color:#38bdf8;border:1px solid #1a3a52;flex:0 0 auto;padding:8px 10px;}
 .btn-start:not(:disabled):hover{background:#16a34a;}
 .btn-stop:not(:disabled):hover{background:#dc2626;}
 .btn-fetch:hover{background:#1a2d3a;}
-
-.rule-box{background:#050709;border:1px solid #0d1a26;border-radius:4px;padding:9px 11px;margin-bottom:8px;font-size:10px;line-height:1.9;}
-.rule-row{display:flex;justify-content:space-between;border-bottom:1px solid #0a1520;padding:2px 0;}
-.rule-row:last-child{border-bottom:none;}
-.rule-k{color:#2a4a6a;}
-.rule-v{color:#c4d4e4;font-weight:500;}
-.rule-v.ok{color:#22c55e;}.rule-v.p{color:#a855f7;}
-
-.balance-disp{background:#050709;border:1px solid #0d1a26;border-radius:3px;padding:5px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
-.bal-lbl{font-size:9px;color:#2a4a6a;text-transform:uppercase;letter-spacing:.8px;}
-.bal-amt{color:#38bdf8;font-weight:700;}
-.param-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px;}
-.param label{font-size:9px;color:#2a4a6a;text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:2px;}
-.param input{width:100%;background:#050709;border:1px solid #0d1a26;border-radius:3px;padding:5px 7px;color:#c4d4e4;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;}
+.param-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px;}
+.param label{font-size:9px;color:#2a4a6a;text-transform:uppercase;letter-spacing:.7px;display:block;margin-bottom:2px;}
+.param input{width:100%;background:#050709;border:1px solid #0d1a26;border-radius:3px;padding:4px 7px;color:#c4d4e4;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;}
 .param input:focus{border-color:#a855f744;}
-.size-preview{font-size:9px;color:#f59e0b;padding:2px 0 4px;}
-.prog-bar{height:2px;background:#0d1a26;border-radius:2px;margin-top:5px;overflow:hidden;}
+.balance-disp{background:#050709;border:1px solid #0d1a26;border-radius:3px;padding:5px 9px;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;}
+.bal-lbl{font-size:9px;color:#2a4a6a;text-transform:uppercase;letter-spacing:.7px;}
+.bal-amt{color:#38bdf8;font-weight:700;}
+.size-preview{font-size:9px;color:#f59e0b;padding:2px 0 3px;}
+.prog-bar{height:2px;background:#0d1a26;border-radius:2px;margin-top:4px;overflow:hidden;}
 .prog-fill{height:2px;background:#a855f7;transition:width .3s;width:0%;}
-.fetch-status{font-size:9px;color:#2a4a6a;margin-top:4px;line-height:1.5;}
-
+.fetch-status{font-size:9px;color:#2a4a6a;margin-top:3px;line-height:1.5;}
 .pos-entry{padding:6px 0;border-bottom:1px solid #0a1520;}
 .pos-entry:last-child{border-bottom:none;}
-.pos-r1{display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px;}
+.pos-r1{display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px;align-items:center;}
 .pos-r2{display:flex;justify-content:space-between;font-size:9px;color:#2a4a6a;margin-bottom:3px;}
+.pos-exit{font-size:9px;color:#f59e0b;margin-top:2px;}
 .pbar{height:4px;background:#0d1a26;border-radius:2px;overflow:hidden;}
-.pbar-fill{height:4px;border-radius:2px;transition:width .5s;}
-
-.mini-stat{display:flex;justify-content:space-between;font-size:10px;padding:4px 0;border-bottom:1px solid #0a1520;}
+.pbar-fill{height:4px;border-radius:2px;transition:width .4s;}
+.mini-stat{display:flex;justify-content:space-between;font-size:10px;padding:3px 0;border-bottom:1px solid #0a1520;}
 .mini-stat:last-child{border-bottom:none;}
 .ms-l{color:#2a4a6a;}
-.log-hdr{padding:7px 13px;background:#050709;border-bottom:1px solid #0d1a26;display:flex;justify-content:space-between;align-items:center;}
-.log-area{flex:1;overflow-y:auto;min-height:180px;max-height:300px;}
+.log-hdr{padding:6px 12px;background:#050709;border-bottom:1px solid #0d1a26;display:flex;justify-content:space-between;align-items:center;}
+.log-area{flex:1;overflow-y:auto;min-height:160px;max-height:280px;}
 .log-area::-webkit-scrollbar{width:3px;background:#07090c;}
 .log-area::-webkit-scrollbar-thumb{background:#0d1a26;}
-.log-entry{display:flex;gap:5px;padding:4px 10px;border-bottom:1px solid #080f18;font-size:9px;align-items:flex-start;line-height:1.5;}
+.log-entry{display:flex;gap:5px;padding:3px 10px;border-bottom:1px solid #080f18;font-size:9px;align-items:flex-start;line-height:1.5;}
 .le-ts{color:#2a4a6a;min-width:46px;flex-shrink:0;}
 .le-icon{width:12px;text-align:center;flex-shrink:0;font-weight:700;}
 .le-msg{flex:1;word-break:break-all;}
 .le-pnl{min-width:54px;text-align:right;font-weight:700;flex-shrink:0;}
-.info-box{margin:10px;padding:10px 12px;background:#001220;border:1px solid #1a3a52;border-radius:4px;font-size:10px;color:#5a9abf;line-height:1.9;}
-.info-box strong{color:#38bdf8;}
-.info-box code{background:#050709;padding:1px 5px;border-radius:2px;color:#c4d4e4;font-size:9px;}
-.loading-msg{padding:16px 14px;font-size:10px;color:#2a4a6a;display:flex;align-items:center;gap:8px;}
+.cors-box{margin:12px;padding:12px;background:#001220;border:1px solid #1a3a52;border-radius:4px;font-size:10px;color:#5a9abf;line-height:1.9;}
+.cors-box strong{color:#38bdf8;}
+.cors-box code{background:#050709;padding:1px 5px;border-radius:2px;color:#c4d4e4;font-size:9px;}
+.loading-msg{padding:14px;font-size:10px;color:#2a4a6a;display:flex;align-items:center;gap:8px;}
 .spin{width:12px;height:12px;border:2px solid #0d1a26;border-top-color:#a855f7;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::-webkit-scrollbar{width:4px;height:4px;background:#07090c;}
 ::-webkit-scrollbar-thumb{background:#0d1a26;border-radius:2px;}
-@media(max-width:780px){.layout{grid-template-columns:1fr;}.statsbar{grid-template-columns:repeat(4,1fr);}.s-hide{display:none;}}
+@media(max-width:800px){.layout{grid-template-columns:1fr;}.statsbar{grid-template-columns:repeat(4,1fr);}.s-hide{display:none;}}
 </style>
 </head>
 <body>
-
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-    <span class="logo">&#129504; SDR/<span>VDOR</span> BOT</span>
-    <span class="badge badge-pump">&#9679; PUMPSWAP</span>
+    <span class="logo">&#129504; PUMP<span>SWAP</span> BOT</span>
+    <span class="badge badge-pump">&#9679; PUMPSWAP ONLY</span>
     <span class="badge badge-live">LIVE DATA</span>
     <span class="badge badge-demo">DEMO TRADES</span>
     <div id="bot-badge"><span class="dot dot-red" id="sdot"></span>IDLE</div>
   </div>
-  <div style="display:flex;align-items:center;gap:14px;">
+  <div style="display:flex;align-items:center;gap:12px;">
     <span style="font-size:9px;color:#2a4a6a;" id="scan-lbl">READY</span>
     <span style="font-size:9px;color:#2a4a6a;" id="clock-el"></span>
   </div>
 </div>
-
 <div class="statsbar">
   <div class="sbox"><div class="slbl">Portfolio</div><div class="sval cb" id="s-port">$10,000.00</div></div>
   <div class="sbox"><div class="slbl">Realised P&L</div><div class="sval cg" id="s-pnl">+$0.00</div></div>
   <div class="sbox"><div class="slbl">Open Trades</div><div class="sval cw" id="s-open">0</div></div>
   <div class="sbox"><div class="slbl">Total Trades</div><div class="sval cw" id="s-total">0</div></div>
   <div class="sbox"><div class="slbl">Win Rate</div><div class="sval ca" id="s-wr">--</div></div>
-  <div class="sbox s-hide"><div class="slbl">Watching</div><div class="sval cp" id="s-watching">0</div></div>
-  <div class="sbox s-hide"><div class="slbl">Triggered</div><div class="sval cg" id="s-triggered">0</div></div>
+  <div class="sbox s-hide"><div class="slbl">PASS</div><div class="sval cg" id="s-pass">0</div></div>
+  <div class="sbox s-hide"><div class="slbl">Pairs Scanned</div><div class="sval cw" id="s-total-pairs">0</div></div>
   <div class="sbox s-hide"><div class="slbl">Last Fetch</div><div class="sval cw" style="font-size:10px;" id="s-fetchtime">--</div></div>
 </div>
-
 <div class="layout">
   <div class="feed-col">
     <div class="col-hdr">
-      <span class="col-lbl" id="feed-title">PumpSwap SDR/VDOR Scanner</span>
-      <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-        <span class="pill pill-g" id="pill-triggered">0 TRIGGERED</span>
-        <span class="pill pill-p" id="pill-watching">0 WATCHING</span>
-        <span class="pill pill-a" id="pill-fail">0 FAILED RULES</span>
+      <span class="col-lbl" id="feed-title">PumpSwap Live Scanner</span>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
+        <span class="pill pill-g" id="pill-pass">0 PASS</span>
+        <span class="pill pill-a" id="pill-watch">0 WATCH</span>
+        <span class="pill pill-r" id="pill-fail">0 FAIL</span>
+        <span class="pill pill-b" id="pill-total">0 TOTAL</span>
       </div>
     </div>
-    <div id="feed-loading" class="loading-msg"><div class="spin"></div><span id="loading-txt">Scanning PumpSwap for SDR/VDOR tokens...</span></div>
+    <div id="feed-loading" class="loading-msg"><div class="spin"></div><span id="loading-txt">Fetching PumpSwap pairs from Dexscreener...</span></div>
     <div class="feed-scroll" id="token-feed" style="display:none;"></div>
   </div>
-
   <div class="right">
     <div class="rsec">
-      <div class="rtitle">Strategy Rules</div>
-      <div class="rule-box">
-        <div class="rule-row"><span class="rule-k">DEX</span><span class="rule-v p">PumpSwap only</span></div>
-        <div class="rule-row"><span class="rule-k">Token names</span><span class="rule-v p">SDR, VDOR (exact)</span></div>
-        <div class="rule-row"><span class="rule-k">Min age</span><span class="rule-v ok">&gt; 5 minutes</span></div>
-        <div class="rule-row"><span class="rule-k">Min liquidity</span><span class="rule-v ok">&gt; $10,000</span></div>
-        <div class="rule-row"><span class="rule-k">Top holder</span><span class="rule-v ok">&lt; 10% each (excl. LP)</span></div>
-        <div class="rule-row"><span class="rule-k">BUY trigger</span><span class="rule-v p">Vol $1M within first 30min</span></div>
-        <div class="rule-row"><span class="rule-k">Max age to buy</span><span class="rule-v" style="color:#ef4444;">&lt; 45 minutes (hard cutoff)</span></div>
-        <div class="rule-row"><span class="rule-k">Stop Loss</span><span class="rule-v" style="color:#ef4444;">-50%</span></div>
-        <div class="rule-row"><span class="rule-k">Take Profit</span><span class="rule-v ok">+100%</span></div>
-      </div>
+      <div class="rtitle">Entry &amp; Exit Rules (Editable)</div>
       <div class="ctrl-row">
         <button class="big-btn btn-start" id="start-btn" onclick="startBot()" disabled>&#9654; START BOT</button>
         <button class="big-btn btn-stop" id="stop-btn" onclick="stopBot()" disabled>&#9646;&#9646; STOP</button>
-        <button class="big-btn btn-fetch" id="fetch-btn" onclick="manualFetch()">&#8635; SCAN</button>
+        <button class="big-btn btn-fetch" id="fetch-btn" onclick="manualFetch()">&#8635; FETCH</button>
       </div>
       <div class="balance-disp">
         <span class="bal-lbl">Free Cash</span>
         <span class="bal-amt" id="free-cash-disp">$10,000.00</span>
       </div>
       <div class="param-grid">
-        <div class="param"><label>Trade Size (% cash)</label><input id="p-size-pct" type="number" value="20" min="1" max="100" step="1" oninput="updateSizePreview()"></div>
+        <div class="param"><label>Trade Size % cash</label><input id="p-size" type="number" value="20" min="1" max="100" oninput="updatePreview()"></div>
         <div class="param"><label>Max Open Trades</label><input id="p-max" type="number" value="3" min="1" max="10"></div>
+        <div class="param"><label>Min Liq ($)</label><input id="p-liq" type="number" value="10000" min="1000" step="1000"></div>
+        <div class="param"><label>Min MCap ($)</label><input id="p-mc-min" type="number" value="30000" min="1000" step="1000"></div>
+        <div class="param"><label>Max MCap ($)</label><input id="p-mc-max" type="number" value="1000000" min="10000" step="10000"></div>
+        <div class="param"><label>Max Age (min)</label><input id="p-age" type="number" value="60" min="5" max="1440"></div>
+        <div class="param"><label>Vol24h/MCap min %</label><input id="p-v24-min" type="number" value="5" min="1" max="100" step="1"></div>
+        <div class="param"><label>Vol24h/MCap max %</label><input id="p-v24-max" type="number" value="200" min="10" max="10000" step="10"></div>
+        <div class="param"><label>Min Chg1h %</label><input id="p-c1h" type="number" value="0" min="-100" max="500" step="1"></div>
+        <div class="param"><label>Min Chg6h %</label><input id="p-c6h" type="number" value="0" min="-100" max="500" step="1"></div>
+        <div class="param"><label>Min Chg5m %</label><input id="p-c5m-min" type="number" value="-10" min="-100" max="500" step="1"></div>
+        <div class="param"><label>Min Vol5m ($)</label><input id="p-vol5m" type="number" value="100000" min="1000" step="1000"></div>
+        <div class="param"><label>Min AvgTx (SOL)</label><input id="p-tx-min" type="number" value="3" min="0.1" max="100" step="0.5"></div>
+        <div class="param"><label>Max AvgTx (SOL)</label><input id="p-tx-max" type="number" value="15" min="0.5" max="1000" step="0.5"></div>
+        <div class="param"><label>Take Profit %</label><input id="p-tp" type="number" value="100" min="5" max="1000"></div>
+        <div class="param"><label>Stop Loss %</label><input id="p-sl" type="number" value="20" min="2" max="90"></div>
+        <div class="param"><label>Vol per 15min exit ($)</label><input id="p-vol15" type="number" value="500000" min="10000" step="10000"></div>
+        <div class="param"><label>Vol per 30min exit ($)</label><input id="p-vol30" type="number" value="1000000" min="10000" step="10000"></div>
       </div>
       <div class="size-preview" id="size-preview">Trade size: $2,000.00 (20% of $10,000.00)</div>
       <div class="prog-bar"><div class="prog-fill" id="scan-prog"></div></div>
-      <div class="fetch-status" id="fetch-status">Click SCAN or START BOT to begin</div>
+      <div class="fetch-status" id="fetch-status">Click FETCH or START BOT</div>
     </div>
-
     <div class="rsec">
-      <div class="rtitle">Open Positions <span style="color:#2a4a6a;font-size:9px;">(demo)</span></div>
+      <div class="rtitle">Open Positions <span style="color:#2a4a6a;">(demo)</span></div>
       <div id="positions-area"><div style="font-size:9px;color:#2a4a6a;">No open positions</div></div>
     </div>
-
     <div class="rsec">
       <div class="rtitle">P&L Summary</div>
       <div class="mini-stat"><span class="ms-l">Free cash</span><span class="cb" id="ms-cash">$10,000.00</span></div>
@@ -218,381 +205,377 @@ body{background:#07090c;color:#c4d4e4;font-family:'JetBrains Mono',monospace;fon
       <div class="mini-stat"><span class="ms-l">Wins / Losses</span><span id="ms-wl">0 / 0</span></div>
       <div class="mini-stat"><span class="ms-l">Best trade</span><span class="cg" id="ms-best">--</span></div>
     </div>
-
     <div class="log-hdr">
       <span class="rtitle" style="margin:0;">Activity Log</span>
-      <button onclick="clearLog()" style="font-size:9px;background:transparent;border:1px solid #0d1a26;color:#2a4a6a;padding:2px 8px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;">CLEAR</button>
+      <button onclick="clearLog()" style="font-size:9px;background:transparent;border:1px solid #0d1a26;color:#2a4a6a;padding:2px 7px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;">CLEAR</button>
     </div>
     <div class="log-area" id="log-area">
-      <div style="padding:10px;font-size:9px;color:#2a4a6a;">Start bot to see live activity.</div>
+      <div style="padding:10px;font-size:9px;color:#2a4a6a;">Waiting for bot to start...</div>
     </div>
   </div>
 </div>
-
 <script>
-/* ═══════════════════════════════════════
-   STRATEGY CONSTANTS
-═══════════════════════════════════════ */
-var TARGET_SYMS = {'SDR':1, 'VDOR':1};   // exact token symbol match
-var TARGET_DEX  = 'pumpswap';             // dexId must contain this
-var MIN_AGE_MIN = 5;                      // token must be > 5 min old
-var MAX_AGE_MIN = 45;                     // watch window: first 45 min
-var HARD_BUY_CUTOFF = 45;               // NEVER buy if age >= 45 min
-var MIN_LIQ     = 10000;                  // $10k liquidity minimum
-var MAX_TOP_HOLD= 10;                     // top holder < 10% (excl LP)
-var VOL_TRIGGER = 1000000;               // $1M volume within first 30 min
-var TAKE_PROFIT = 100;                   // 100% TP
-var STOP_LOSS   = 50;                    // 50% SL
-
-/* ═══════════════════════════════════════
-   STATE
-═══════════════════════════════════════ */
-var allTokens   = [];   // all SDR/VDOR pairs found on pumpswap
-var running     = false;
-var botInterval = null;
-var progInt     = null;
-var refetchTimer= null;
-var fetchBusy   = false;
-var tickCount   = 0;
-var totalTriggered = 0;
-
-var cash        = 10000;
-var invested    = 0;
-var realisedPnl = 0;
-var totalTrades = 0;
-var wins        = 0;
-var losses      = 0;
-var bestTrade   = null;
-var positions   = {};
-var logs        = [];
-
-/* ═══════════════════════════════════════
-   FORMAT HELPERS
-═══════════════════════════════════════ */
-function fmtK(n){if(!n||isNaN(n))return'--';if(n>=1e9)return'$'+(n/1e9).toFixed(2)+'B';if(n>=1e6)return'$'+(n/1e6).toFixed(2)+'M';if(n>=1000)return'$'+(n/1000).toFixed(1)+'k';return'$'+n.toFixed(0);}
-function fmtP(p){if(!p||isNaN(p)||p===0)return'$0';var a=Math.abs(p);if(a<1e-8)return'$'+p.toExponential(3);if(a<0.000001)return'$'+p.toFixed(10);if(a<0.0001)return'$'+p.toFixed(8);if(a<0.01)return'$'+p.toFixed(6);if(a<1)return'$'+p.toFixed(4);return'$'+p.toFixed(3);}
+/* ═══════════════════════════
+   HELPERS
+═══════════════════════════ */
+var SOL_PRICE = 150; // will be updated from feed
+function fmtK(n){if(n==null||isNaN(n))return'--';if(n>=1e9)return'$'+(n/1e9).toFixed(2)+'B';if(n>=1e6)return'$'+(n/1e6).toFixed(2)+'M';if(n>=1000)return'$'+(n/1000).toFixed(1)+'k';return'$'+n.toFixed(0);}
+function fmtP(p){if(!p||isNaN(p))return'$0';var a=Math.abs(p);if(a<1e-8)return'$'+p.toExponential(3);if(a<0.000001)return'$'+p.toFixed(10);if(a<0.0001)return'$'+p.toFixed(8);if(a<0.01)return'$'+p.toFixed(6);if(a<1)return'$'+p.toFixed(4);return'$'+p.toFixed(3);}
 function fmtUSD(n){return'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function nowTs(){return new Date().toTimeString().slice(0,8);}
-function fmtAge(m){return m<60?Math.floor(m)+'m':(m/60).toFixed(1)+'h';}
-function pct(v,total){return total>0?((v/total)*100).toFixed(0)+'%':'0%';}
+function fmtAge(m){if(m<1)return'<1m';if(m<60)return Math.floor(m)+'m';return(m/60).toFixed(1)+'h';}
+function g(id){return document.getElementById(id);}
+function gv(id){return parseFloat(g(id).value)||0;}
 
-function getTradeSize(){
-  var p=parseFloat(document.getElementById('p-size-pct').value)||20;
-  return Math.max(1,(cash-invested)*p/100);
-}
-function updateSizePreview(){
-  var p=parseFloat(document.getElementById('p-size-pct').value)||20;
+function getTradeSize(){return Math.max(1,(cash-invested)*gv('p-size')/100);}
+function updatePreview(){
   var free=Math.max(0,cash-invested);
-  document.getElementById('size-preview').textContent='Trade size: '+fmtUSD(free*p/100)+' ('+p+'% of '+fmtUSD(free)+')';
-  document.getElementById('free-cash-disp').textContent=fmtUSD(free);
+  var pct=gv('p-size');
+  g('size-preview').textContent='Trade size: '+fmtUSD(free*pct/100)+' ('+pct+'% of '+fmtUSD(free)+')';
+  g('free-cash-disp').textContent=fmtUSD(free);
 }
 
-/* ═══════════════════════════════════════
-   RULE CHECKER
-   Returns object with each check result
-═══════════════════════════════════════ */
-function checkRules(t){
-  var isSym    = !!TARGET_SYMS[t.sym];
-  var isPump   = t.dexId && t.dexId.toLowerCase().indexOf(TARGET_DEX)>=0;
-  var ageOk    = t.ageMin>=MIN_AGE_MIN;
-  var withinWin= t.ageMin<=MAX_AGE_MIN;   // still within 45 min window
-  var noBuyAge = t.ageMin>=HARD_BUY_CUTOFF; // HARD RULE: never buy >= 45 min
-  var liqOk    = t.liq>=MIN_LIQ;
-  var topOk    = t.topHolder<MAX_TOP_HOLD; // top holder excl LP < 10%
-  var volHit   = t.vol30m>=VOL_TRIGGER;    // $1M vol within window
+/* ═══════════════════════════
+   STATE
+═══════════════════════════ */
+var allPairs=[], running=false, fetchBusy=false;
+var botInterval=null, refetchTimer=null, progInt=null, tickCount=0;
+var cash=10000, invested=0, realisedPnl=0, totalTrades=0, wins=0, losses=0, bestTrade=null;
+var positions={}, logs=[];
+// positions[pairAddress] = {entry,tokens,size,sym,url,openedAt(ms),
+//   volCheckpoints:[{atMs,vol5mAtEntry},...], lastVol15check, lastVol30check, vol15acc, vol30acc}
 
-  // base conditions (must pass before we watch)
-  var basePass = isSym && isPump && ageOk && liqOk && topOk;
-  // trigger = base pass AND volume hit AND still under 45 min hard cutoff
-  var triggered= basePass && !noBuyAge && volHit;
-  // watching = base pass, window open, vol not yet hit, still buyable
-  var watching = basePass && withinWin && !noBuyAge && !volHit;
-  // expired = base pass but age hit 45 min without vol trigger
-  var expired  = basePass && (noBuyAge || !withinWin) && !volHit && !positions[t.pairAddress];
+/* ═══════════════════════════
+   ENTRY RULES EVALUATOR
+   Returns {pass, reasons[]}
+═══════════════════════════ */
+function evaluate(t){
+  var reasons=[];
+  var minLiq   = gv('p-liq');
+  var mcMin    = gv('p-mc-min');
+  var mcMax    = gv('p-mc-max');
+  var maxAge   = gv('p-age');
+  var v24min   = gv('p-v24-min');
+  var v24max   = gv('p-v24-max');
+  var minC1h   = gv('p-c1h');
+  var minC6h   = gv('p-c6h');
+  var minC5m   = gv('p-c5m-min');
+  var minVol5m = gv('p-vol5m');
+  var txMin    = gv('p-tx-min');
+  var txMax    = gv('p-tx-max');
 
-  return {isSym,isPump,ageOk,withinWin,noBuyAge,liqOk,topOk,volHit,basePass,triggered,watching,expired};
+  var checks = {
+    pumpswap: (t.dexId||'').toLowerCase().indexOf('pump')>=0,
+    liq:      t.liq >= minLiq,
+    mcap:     t.mcap >= mcMin && t.mcap <= mcMax,
+    age:      t.ageMin <= maxAge,
+    vol24ratio: (function(){var r=t.mcap>0?(t.vol24h/t.mcap)*100:0; return r>=v24min&&r<=v24max;}()),
+    chg1h:    t.chg1h >= minC1h,
+    chg6h:    t.chg6h >= minC6h,
+    chg5m:    t.chg5m >= minC5m,
+    vol5m:    t.vol5m >= minVol5m,
+    avgTx:    t.avgTxSol >= txMin && t.avgTxSol <= txMax,
+  };
+
+  var labels={
+    pumpswap:'Not PumpSwap ('+t.dexId+')',
+    liq:'Liq '+fmtK(t.liq)+'<'+fmtK(minLiq),
+    mcap:'MCap '+fmtK(t.mcap)+' out of '+fmtK(mcMin)+'-'+fmtK(mcMax),
+    age:'Age '+fmtAge(t.ageMin)+'>'+maxAge+'m',
+    vol24ratio:'Vol24h/MCap '+(t.mcap>0?((t.vol24h/t.mcap)*100).toFixed(1):0)+'% not in '+v24min+'%-'+v24max+'%',
+    chg1h:'Chg1h '+(t.chg1h>=0?'+':'')+t.chg1h.toFixed(1)+'%<'+minC1h+'%',
+    chg6h:'Chg6h '+(t.chg6h>=0?'+':'')+t.chg6h.toFixed(1)+'%<'+minC6h+'%',
+    chg5m:'Chg5m '+(t.chg5m>=0?'+':'')+t.chg5m.toFixed(1)+'%<'+minC5m+'%',
+    vol5m:'Vol5m '+fmtK(t.vol5m)+'<'+fmtK(minVol5m),
+    avgTx:'AvgTx '+t.avgTxSol.toFixed(1)+'SOL not in '+txMin+'-'+txMax+'SOL',
+  };
+
+  var fails=[];
+  Object.keys(checks).forEach(function(k){if(!checks[k])fails.push(labels[k]);});
+
+  var pass = fails.length===0;
+  return {pass, checks, fails};
 }
 
-/* ═══════════════════════════════════════
-   FETCH — search PumpSwap for SDR + VDOR
-   Uses Dexscreener search API:
-   /latest/dex/search?q=SDR
-   /latest/dex/search?q=VDOR
-   Then filters to pumpswap dexId only
-═══════════════════════════════════════ */
-var PROXY='https://api.allorigins.win/raw?url=';
+/* ═══════════════════════════
+   EXIT CHECKER (per position)
+   Returns {exit, reason}
+═══════════════════════════ */
+function checkExit(pos, t){
+  var tp = gv('p-tp');
+  var sl = gv('p-sl');
+  var vol15min = gv('p-vol15');
+  var vol30min = gv('p-vol30');
+  var pct = ((t.price - pos.entry) / pos.entry) * 100;
+  var now = Date.now();
 
-async function tryFetch(url){
-  try{var r=await fetch(url,{headers:{'Accept':'application/json'},signal:AbortSignal.timeout(8000)});if(r.ok)return await r.json();}catch(e){}
-  try{var r2=await fetch(PROXY+encodeURIComponent(url),{signal:AbortSignal.timeout(12000)});if(r2.ok)return await r2.json();}catch(e){}
-  return null;
-}
+  // TP / SL
+  if(pct >= tp) return {exit:true, reason:'TP +'+pct.toFixed(1)+'%'};
+  if(pct <= -sl) return {exit:true, reason:'SL '+pct.toFixed(1)+'%'};
 
-function manualFetch(){fetchData(false);}
-function backgroundFetch(){if(!fetchBusy)fetchData(true);}
+  // Volume decay exit — check every 15 minutes after entry
+  var elapsed15 = Math.floor((now - pos.openedAt) / (15*60*1000));
+  var elapsed30 = Math.floor((now - pos.openedAt) / (30*60*1000));
 
-async function fetchData(isBackground){
-  if(fetchBusy)return;
-  fetchBusy=true;
-  if(!isBackground){
-    document.getElementById('fetch-btn').disabled=true;
-    document.getElementById('feed-loading').style.display='flex';
-    document.getElementById('feed-loading').innerHTML='<div class="spin"></div><span id="loading-txt">Scanning PumpSwap for SDR/VDOR...</span>';
-    document.getElementById('token-feed').style.display='none';
-    if(!running)document.getElementById('start-btn').disabled=true;
+  // 15-min volume check: vol5m * 3 is a proxy for vol per 15 min
+  if(elapsed15 > pos.last15check){
+    pos.last15check = elapsed15;
+    var vol15est = t.vol5m * 3; // 15min ≈ 3x the last 5m candle
+    if(vol15est < vol15min){
+      return {exit:true, reason:'Vol/15m '+fmtK(vol15est)+'<'+fmtK(vol15min)+' (decay exit)'};
+    }
   }
-  animProg();
-  setStatus('Searching SDR on PumpSwap...');
-
-  var pairsMap={};
-
-  // Search both token symbols
-  var queries=['SDR','VDOR','sdr','vdor'];
-  for(var qi=0;qi<queries.length;qi++){
-    var res=await tryFetch('https://api.dexscreener.com/latest/dex/search?q='+queries[qi]);
-    if(res&&res.pairs){
-      res.pairs.forEach(function(p){
-        if(p&&p.pairAddress)pairsMap[p.pairAddress]=p;
-      });
+  // 30-min volume check: vol1h/2 is a proxy for vol per 30 min
+  if(elapsed30 > pos.last30check){
+    pos.last30check = elapsed30;
+    var vol30est = t.vol1h > 0 ? t.vol1h/2 : t.vol5m*6;
+    if(vol30est < vol30min){
+      return {exit:true, reason:'Vol/30m '+fmtK(vol30est)+'<'+fmtK(vol30min)+' (decay exit)'};
     }
   }
 
-  // Also try direct token search via latest pairs on solana (pumpswap is solana)
-  // Try to get pumpswap-specific pairs
-  var pumpRes=await tryFetch('https://api.dexscreener.com/latest/dex/search?q=pumpswap+SDR');
-  if(pumpRes&&pumpRes.pairs)pumpRes.pairs.forEach(function(p){if(p&&p.pairAddress)pairsMap[p.pairAddress]=p;});
-  var pumpRes2=await tryFetch('https://api.dexscreener.com/latest/dex/search?q=pumpswap+VDOR');
-  if(pumpRes2&&pumpRes2.pairs)pumpRes2.pairs.forEach(function(p){if(p&&p.pairAddress)pairsMap[p.pairAddress]=p;});
+  return {exit:false};
+}
 
-  var raw=Object.values(pairsMap);
-  addLog('info','Raw pairs from API: '+raw.length+' — filtering to PumpSwap SDR/VDOR...',null,'b');
+/* ═══════════════════════════
+   FETCH — PumpSwap pairs only
+   Uses Dexscreener API:
+   1. Search "pumpswap" directly
+   2. Search trending meme terms
+   3. Token profiles/boosts
+   All filtered to dexId containing "pump"
+═══════════════════════════ */
+var PROXY = 'https://api.allorigins.win/raw?url=';
+
+async function tryFetch(url){
+  try{
+    var r=await fetch(url,{headers:{'Accept':'application/json'},signal:AbortSignal.timeout(8000)});
+    if(r.ok)return await r.json();
+  }catch(e){}
+  try{
+    var r2=await fetch(PROXY+encodeURIComponent(url),{signal:AbortSignal.timeout(12000)});
+    if(r2.ok)return await r2.json();
+  }catch(e){}
+  return null;
+}
+
+var MEME_TERMS=['pump','pumpswap','new','launch','sol','meme','ai','cat','dog','pepe','bonk','moon','inu','frog','chad','trump','doge','baby','based','turbo'];
+
+function manualFetch(){fetchData(false);}
+function bgFetch(){if(!fetchBusy)fetchData(true);}
+
+async function fetchData(isBg){
+  if(fetchBusy)return;
+  fetchBusy=true;
+
+  if(!isBg){
+    g('fetch-btn').disabled=true;
+    g('feed-loading').style.display='flex';
+    g('feed-loading').innerHTML='<div class="spin"></div><span id="loading-txt">Fetching PumpSwap pairs...</span>';
+    g('token-feed').style.display='none';
+    if(!running)g('start-btn').disabled=true;
+  }
+  animProg();
+  setStatus('Querying Dexscreener API for PumpSwap pairs...');
+
+  var pmap={};
+
+  // Direct pumpswap searches
+  for(var i=0;i<MEME_TERMS.length;i+=4){
+    var batch=MEME_TERMS.slice(i,i+4).map(function(q){
+      return tryFetch('https://api.dexscreener.com/latest/dex/search?q='+q);
+    });
+    var results=await Promise.all(batch);
+    results.forEach(function(r){
+      if(r&&r.pairs)r.pairs.forEach(function(p){
+        if(p&&p.pairAddress&&(p.dexId||'').toLowerCase().indexOf('pump')>=0)
+          pmap[p.pairAddress]=p;
+      });
+    });
+    setStatus('Searching... '+Object.keys(pmap).length+' PumpSwap pairs found so far');
+  }
+
+  // Also check token boosts (often pumpswap tokens)
+  var boostUrls=[
+    'https://api.dexscreener.com/token-boosts/top/v1',
+    'https://api.dexscreener.com/token-boosts/latest/v1',
+    'https://api.dexscreener.com/token-profiles/latest/v1',
+  ];
+  var tokenAddrs=[];
+  for(var bi=0;bi<boostUrls.length;bi++){
+    var bd=await tryFetch(boostUrls[bi]);
+    if(bd&&Array.isArray(bd))bd.forEach(function(x){
+      if(x.chainId==='solana'&&x.tokenAddress)tokenAddrs.push(x.tokenAddress);
+    });
+  }
+  // Batch-resolve boosted solana tokens
+  for(var b=0;b<tokenAddrs.length;b+=30){
+    var bres=await tryFetch('https://api.dexscreener.com/latest/dex/tokens/'+tokenAddrs.slice(b,b+30).join(','));
+    if(bres&&bres.pairs)bres.pairs.forEach(function(p){
+      if(p&&p.pairAddress&&(p.dexId||'').toLowerCase().indexOf('pump')>=0)
+        pmap[p.pairAddress]=p;
+    });
+  }
+
+  var raw=Object.values(pmap);
+  setStatus('Collected '+raw.length+' PumpSwap pairs — processing...');
 
   if(raw.length===0){
     fetchBusy=false;
-    if(!isBackground){showCorsFallback();}
-    else{addLog('warn','BG fetch got 0 results',null,'a');}
-    document.getElementById('fetch-btn').disabled=false;
+    g('fetch-btn').disabled=false;
+    if(!isBg){showCorsBox();}
+    else{addLog('warn','BG fetch: 0 PumpSwap pairs (CORS?)',null,'a');}
     return;
   }
 
-  processPairs(raw, isBackground);
+  processPairs(raw, isBg);
 }
 
 function setStatus(msg){
-  document.getElementById('fetch-status').textContent=msg;
-  var el=document.getElementById('loading-txt');if(el)el.textContent=msg;
+  g('fetch-status').textContent=msg;
+  var el=g('loading-txt');if(el)el.textContent=msg;
 }
 
-function processPairs(pairs, isBackground){
+function processPairs(raw, isBg){
+  var STABLES={'USDC':1,'USDT':1,'DAI':1,'BUSD':1,'FDUSD':1,'USDCE':1};
   var seen={}, out=[];
 
-  pairs.forEach(function(p){
+  raw.forEach(function(p){
     if(!p||!p.baseToken||!p.pairAddress)return;
     if(seen[p.pairAddress])return;
     seen[p.pairAddress]=1;
 
-    var sym=(p.baseToken.symbol||'').toUpperCase().trim();
-    var dexId=(p.dexId||'').toLowerCase();
-    var chainId=(p.chainId||'').toLowerCase();
-
-    // MUST be SDR or VDOR symbol
-    if(!TARGET_SYMS[sym])return;
-    // MUST be on pumpswap
-    if(dexId.indexOf('pump')<0)return;
-
-    var price   = parseFloat(p.priceUsd)||0;
+    var sym=(p.baseToken.symbol||'').toUpperCase();
+    if(STABLES[sym])return;
+    var price=parseFloat(p.priceUsd)||0;
     if(price<=0)return;
 
-    var liq     = p.liquidity&&p.liquidity.usd?parseFloat(p.liquidity.usd):0;
-    // vol30m: use h1 as proxy (Dexscreener doesn't expose 30m directly)
-    // We compute vol30m estimate = average of m5*6 and h1/2
-    var vol5m   = p.volume&&p.volume.m5?parseFloat(p.volume.m5):0;
-    var vol1h   = p.volume&&p.volume.h1?parseFloat(p.volume.h1):0;
-    var vol24h  = p.volume&&p.volume.h24?parseFloat(p.volume.h24):0;
-    var vol30m  = Math.max(vol5m*6, vol1h);  // best estimate of 30m volume
-    var chg5m   = p.priceChange&&p.priceChange.m5!=null?parseFloat(p.priceChange.m5):0;
-    var chg1h   = p.priceChange&&p.priceChange.h1!=null?parseFloat(p.priceChange.h1):0;
-    var ageMin  = p.pairCreatedAt?Math.max(0,(Date.now()-p.pairCreatedAt)/60000):9999;
-    var txns5m  = p.txns&&p.txns.m5?p.txns.m5:{buys:0,sells:0};
-    var txns1h  = p.txns&&p.txns.h1?p.txns.h1:{buys:0,sells:0};
+    var liq    = p.liquidity&&p.liquidity.usd?parseFloat(p.liquidity.usd):0;
+    var mcap   = p.fdv||p.marketCap||0;
+    var vol5m  = p.volume&&p.volume.m5?parseFloat(p.volume.m5):0;
+    var vol1h  = p.volume&&p.volume.h1?parseFloat(p.volume.h1):0;
+    var vol6h  = p.volume&&p.volume.h6?parseFloat(p.volume.h6):0;
+    var vol24h = p.volume&&p.volume.h24?parseFloat(p.volume.h24):0;
+    var chg5m  = p.priceChange&&p.priceChange.m5!=null?parseFloat(p.priceChange.m5):0;
+    var chg1h  = p.priceChange&&p.priceChange.h1!=null?parseFloat(p.priceChange.h1):0;
+    var chg6h  = p.priceChange&&p.priceChange.h6!=null?parseFloat(p.priceChange.h6):0;
+    var chg24h = p.priceChange&&p.priceChange.h24!=null?parseFloat(p.priceChange.h24):0;
+    var ageMin = p.pairCreatedAt?Math.max(0,(Date.now()-p.pairCreatedAt)/60000):9999;
+    var txns5m = p.txns&&p.txns.m5?p.txns.m5:{buys:0,sells:0};
+    var txns1h = p.txns&&p.txns.h1?p.txns.h1:{buys:0,sells:0};
+    var totalTx5m = (txns5m.buys||0)+(txns5m.sells||0);
 
-    // Top holder — Dexscreener doesn't expose wallet distribution directly.
-    // We estimate using a heuristic: if one address holds a large share, 
-    // txn imbalance is extreme. We flag if buys1h/sells1h ratio > 10:1
-    // (very one-sided = whale accumulation). Real impl would use on-chain data.
-    // For now we simulate top holder % as a stored value per pair.
-    var topHolder = p._topHolder || (Math.random()*15+1); // 1–16% simulated
-    p._topHolder = topHolder; // persist across fetches
+    // Average transaction size in SOL
+    // avgTxUSD = vol5m / totalTx5m; avgTxSOL = avgTxUSD / SOL_PRICE
+    var avgTxSol = totalTx5m>0 ? (vol5m/totalTx5m)/SOL_PRICE : 0;
+
+    // Update SOL_PRICE if we see SOL/USDC pair
+    if((sym==='SOL'||sym==='WSOL')&&price>50)SOL_PRICE=price;
 
     out.push({
       sym, name:p.baseToken.name||sym,
-      chainId, dexId,
-      chain:'solana * '+dexId,
-      price, liq, vol5m, vol1h, vol24h, vol30m,
-      chg5m, chg1h,
-      ageMin, topHolder,
-      buys:txns5m.buys||0, sells:txns5m.sells||0,
+      chainId:p.chainId||'solana',
+      dexId:p.dexId||'pumpswap',
+      chain:'solana * '+(p.dexId||'pumpswap'),
+      price, liq, mcap,
+      vol5m, vol1h, vol6h, vol24h,
+      chg5m, chg1h, chg6h, chg24h,
+      ageMin, avgTxSol,
+      buys5m:txns5m.buys||0, sells5m:txns5m.sells||0,
       buys1h:txns1h.buys||0, sells1h:txns1h.sells||0,
-      mcap:p.fdv||0,
-      url:p.url||'https://dexscreener.com',
+      url:p.url||('https://dexscreener.com/solana/'+p.pairAddress),
       pairAddress:p.pairAddress,
-      isLive:true,
-      tokenAddress:p.baseToken.address||'',
+      tokenAddress:(p.baseToken&&p.baseToken.address)||'',
     });
   });
 
-  // Sort: triggered first, then by vol30m desc
+  // Sort: PASS first, then by vol5m desc
   out.sort(function(a,b){
-    var ra=checkRules(a), rb=checkRules(b);
-    if(ra.triggered&&!rb.triggered)return -1;
-    if(!ra.triggered&&rb.triggered)return 1;
-    return b.vol30m-a.vol30m;
+    var ea=evaluate(a),eb=evaluate(b);
+    if(ea.pass&&!eb.pass)return -1;
+    if(!ea.pass&&eb.pass)return 1;
+    return b.vol5m-a.vol5m;
   });
 
-  // Merge with existing (preserve positions tracking)
-  // Update prices of existing tokens, add new ones
-  var existingMap={};
-  allTokens.forEach(function(t){existingMap[t.pairAddress]=t;});
-  out.forEach(function(t){
-    if(existingMap[t.pairAddress]){
-      // update live data but preserve _topHolder
-      var old=existingMap[t.pairAddress];
-      t._topHolder=old._topHolder||t.topHolder;
-      t.topHolder=t._topHolder;
-    }
-    existingMap[t.pairAddress]=t;
-  });
-  allTokens=Object.values(existingMap).filter(function(t){return TARGET_SYMS[t.sym];});
-  allTokens.sort(function(a,b){
-    var ra=checkRules(a),rb=checkRules(b);
-    if(ra.triggered&&!rb.triggered)return -1;
-    if(!ra.triggered&&rb.triggered)return 1;
-    return b.vol30m-a.vol30m;
+  // Merge live prices into existing allPairs (preserve position tracking)
+  var existMap={};
+  allPairs.forEach(function(t){existMap[t.pairAddress]=t;});
+  out.forEach(function(t){existMap[t.pairAddress]=t;});
+  allPairs=Object.values(existMap);
+  allPairs.sort(function(a,b){
+    var ea=evaluate(a),eb=evaluate(b);
+    if(ea.pass&&!eb.pass)return -1;
+    if(!ea.pass&&eb.pass)return 1;
+    return b.vol5m-a.vol5m;
   });
 
-  var trig=allTokens.filter(function(t){return checkRules(t).triggered;}).length;
-  var watch=allTokens.filter(function(t){return checkRules(t).watching;}).length;
-  totalTriggered=trig;
+  var passN=allPairs.filter(function(t){return evaluate(t).pass;}).length;
+  g('s-total-pairs').textContent=allPairs.length;
+  g('s-pass').textContent=passN;
+  g('s-fetchtime').textContent=nowTs();
+  g('feed-title').textContent='PumpSwap Live -- '+allPairs.length+' pairs -- '+passN+' PASS';
+  setStatus('LIVE: '+allPairs.length+' PumpSwap pairs | '+passN+' pass all rules | auto-refreshes every 30s');
 
-  document.getElementById('s-fetchtime').textContent=nowTs();
-  document.getElementById('s-watching').textContent=watch;
-  document.getElementById('s-triggered').textContent=trig;
-  setStatus('Found '+allTokens.length+' SDR/VDOR pairs on PumpSwap | '+trig+' triggered | '+watch+' watching');
-  document.getElementById('feed-title').textContent='PumpSwap SDR/VDOR -- '+allTokens.length+' pairs | '+trig+' triggered';
-
-  if(!isBackground){
-    document.getElementById('feed-loading').style.display='none';
-    document.getElementById('token-feed').style.display='block';
-    if(!running)document.getElementById('start-btn').disabled=false;
+  if(!isBg){
+    g('feed-loading').style.display='none';
+    g('token-feed').style.display='block';
+    if(!running)g('start-btn').disabled=false;
   }
-  document.getElementById('fetch-btn').disabled=false;
+  g('fetch-btn').disabled=false;
   fetchBusy=false;
 
-  addLog('info',(isBackground?'[BG] ':'')+'Found '+allTokens.length+' SDR/VDOR on PumpSwap | '+trig+' triggered | '+watch+' watching',null,'b');
+  addLog('info',(isBg?'[BG] ':'')+'LIVE: '+allPairs.length+' PumpSwap pairs | '+passN+' PASS',null,'b');
   renderFeed();
   scheduleRefetch();
 }
 
-function showCorsFallback(){
-  document.getElementById('feed-loading').innerHTML=
-    '<div class="info-box"><strong>Cannot reach Dexscreener API</strong><br><br>'+
-    'CORS blocks calls from <code>file://</code>. Deploy to GitHub Pages:<br>'+
-    '1. Upload as <code>index.html</code> to a GitHub repo<br>'+
-    '2. Settings &rarr; Pages &rarr; Deploy from branch<br>'+
+function showCorsBox(){
+  g('feed-loading').innerHTML=
+    '<div class="cors-box"><strong>Cannot reach Dexscreener API</strong><br><br>'+
+    'CORS blocks calls from <code>file://</code>. To get live data:<br>'+
+    '1. Upload this file as <code>index.html</code> to a GitHub repo<br>'+
+    '2. Settings &rarr; Pages &rarr; Deploy from branch &rarr; main<br>'+
     '3. Open <code>https://yourusername.github.io/reponame</code><br><br>'+
-    'Loading mock data...</div>';
-  setTimeout(loadMockData,1200);
+    'Live Dexscreener data will load automatically once hosted.</div>';
 }
 
 function scheduleRefetch(){
   clearInterval(refetchTimer);
-  // Re-fetch every 30 seconds — critical for catching the 30-min volume window
-  refetchTimer=setInterval(backgroundFetch,30000);
+  refetchTimer=setInterval(bgFetch,30000); // every 30s for live prices
 }
 
-/* ═══════════════════════════════════════
-   MOCK DATA — realistic SDR/VDOR on pumpswap
-═══════════════════════════════════════ */
-function loadMockData(){
-  allTokens=[
-    {sym:'SDR',name:'Solana Dark Rush',chainId:'solana',dexId:'pumpswap',chain:'solana * pumpswap',
-     price:0.000842,liq:34000,vol5m:48000,vol1h:380000,vol24h:1200000,vol30m:820000,
-     chg5m:12.4,chg1h:38.2,ageMin:18,topHolder:6.2,
-     buys:420,sells:180,buys1h:1680,sells1h:720,mcap:84200,
-     url:'https://dexscreener.com',pairAddress:'mock_sdr_1',isLive:false,tokenAddress:'sdr1111'},
-    {sym:'SDR',name:'Solana Dark Rush',chainId:'solana',dexId:'pumpswap',chain:'solana * pumpswap',
-     price:0.000421,liq:18000,vol5m:22000,vol1h:185000,vol24h:620000,vol30m:310000,
-     chg5m:8.1,chg1h:22.4,ageMin:46,topHolder:8.7,
-     buys:210,sells:95,buys1h:840,sells1h:380,mcap:42100,
-     url:'https://dexscreener.com',pairAddress:'mock_sdr_2',isLive:false,tokenAddress:'sdr2222'},
-    {sym:'VDOR',name:'Velodrome',chainId:'solana',dexId:'pumpswap',chain:'solana * pumpswap',
-     price:0.001247,liq:62000,vol5m:84000,vol1h:910000,vol24h:2800000,vol30m:1240000,
-     chg5m:24.7,chg1h:67.3,ageMin:22,topHolder:4.1,
-     buys:680,sells:210,buys1h:2720,sells1h:840,mcap:247000,
-     url:'https://dexscreener.com',pairAddress:'mock_vdor_1',isLive:false,tokenAddress:'vdor1111'},
-    {sym:'VDOR',name:'Velodrome',chainId:'solana',dexId:'pumpswap',chain:'solana * pumpswap',
-     price:0.000318,liq:11000,vol5m:8000,vol1h:64000,vol24h:210000,vol30m:96000,
-     chg5m:3.2,chg1h:11.4,ageMin:28,topHolder:7.8,
-     buys:90,sells:62,buys1h:360,sells1h:248,mcap:31800,
-     url:'https://dexscreener.com',pairAddress:'mock_vdor_2',isLive:false,tokenAddress:'vdor2222'},
-    // Too new
-    {sym:'SDR',name:'Solana Dark Rush',chainId:'solana',dexId:'pumpswap',chain:'solana * pumpswap',
-     price:0.000091,liq:5000,vol5m:3000,vol1h:18000,vol24h:55000,vol30m:24000,
-     chg5m:45.1,chg1h:88.2,ageMin:2,topHolder:22.0,
-     buys:180,sells:12,buys1h:720,sells1h:48,mcap:9100,
-     url:'https://dexscreener.com',pairAddress:'mock_sdr_3',isLive:false,tokenAddress:'sdr3333'},
-  ];
-
-  var trig=allTokens.filter(function(t){return checkRules(t).triggered;}).length;
-  var watch=allTokens.filter(function(t){return checkRules(t).watching;}).length;
-  document.getElementById('s-fetchtime').textContent=nowTs();
-  document.getElementById('s-watching').textContent=watch;
-  document.getElementById('s-triggered').textContent=trig;
-  document.getElementById('feed-loading').style.display='none';
-  document.getElementById('token-feed').style.display='block';
-  if(!running)document.getElementById('start-btn').disabled=false;
-  document.getElementById('fetch-btn').disabled=false;
-  fetchBusy=false;
-  setStatus('Mock: '+allTokens.length+' SDR/VDOR pairs | '+trig+' triggered | Deploy to GitHub Pages for live data');
-  document.getElementById('feed-title').textContent='Mock -- '+allTokens.length+' pairs | '+trig+' triggered';
-  addLog('warn','CORS -- loaded mock SDR/VDOR data. Deploy to GitHub Pages for live PumpSwap data.',null,'a');
-  renderFeed();
-  scheduleRefetch();
-}
-
-/* ═══════════════════════════════════════
-   BOT TICK — auto-buys on trigger
-═══════════════════════════════════════ */
+/* ═══════════════════════════
+   BOT LOGIC
+═══════════════════════════ */
 function startBot(){
   if(running)return;
   running=true;
-  document.getElementById('start-btn').disabled=true;
-  document.getElementById('stop-btn').disabled=false;
-  document.getElementById('bot-badge').innerHTML='<span class="dot dot-green pulse"></span>RUNNING';
-  addLog('info','Bot started -- watching PumpSwap for SDR/VDOR $1M vol trigger',null,'b');
+  g('start-btn').disabled=true;
+  g('stop-btn').disabled=false;
+  g('bot-badge').innerHTML='<span class="dot dot-green pulse"></span>RUNNING';
+  addLog('info','Bot started — PumpSwap scanner active',null,'b');
+  if(!allPairs.length)fetchData(false);
   botTick();
-  botInterval=setInterval(botTick,3000);
-  // Also start fetching every 30s
+  botInterval=setInterval(botTick,5000);
   scheduleRefetch();
 }
 
 function stopBot(){
   if(!running)return;
   running=false;
-  clearInterval(botInterval);
-  clearInterval(refetchTimer);
-  document.getElementById('start-btn').disabled=false;
-  document.getElementById('stop-btn').disabled=true;
-  document.getElementById('bot-badge').innerHTML='<span class="dot dot-red"></span>STOPPED';
-  addLog('info','Bot stopped -- closing all positions',null,'r');
+  clearInterval(botInterval);clearInterval(refetchTimer);
+  g('start-btn').disabled=false;
+  g('stop-btn').disabled=true;
+  g('bot-badge').innerHTML='<span class="dot dot-red"></span>STOPPED';
+  addLog('info','Bot stopped — closing all positions',null,'r');
   closeAll();
 }
 
 function closeAll(){
   Object.keys(positions).forEach(function(pa){
     var pos=positions[pa];
-    var t=allTokens.find(function(x){return x.pairAddress===pa;});
-    var ep=t?t.price*(1+(Math.random()-0.5)*0.02):pos.entry;
+    var t=allPairs.find(function(x){return x.pairAddress===pa;});
+    var ep=t?t.price:pos.entry;
     var pnl=(ep-pos.entry)*pos.tokens;
     realisedPnl+=pnl;cash+=pos.size+pnl;invested=Math.max(0,invested-pos.size);
     totalTrades++;
@@ -604,285 +587,226 @@ function closeAll(){
 
 function botTick(){
   tickCount++;
-  driftPrices();
-  checkExits();
-
+  checkAllExits();
   var openCount=Object.keys(positions).length;
-  var maxOpen=parseInt(document.getElementById('p-max').value)||3;
+  var maxOpen=parseInt(g('p-max').value)||3;
   var size=getTradeSize();
-
-  document.getElementById('scan-lbl').textContent='TICK #'+tickCount+' | '+allTokens.length+' SDR/VDOR pairs';
+  g('scan-lbl').textContent='TICK #'+tickCount+' | '+allPairs.length+' pairs';
   animProg();
 
-  // Find triggered tokens not yet in position
-  var triggered=allTokens.filter(function(t){
-    var r=checkRules(t);
-    return r.triggered && !positions[t.pairAddress];
-  });
-
-  if(triggered.length>0&&openCount<maxOpen&&(cash-invested)>=Math.max(size,1)){
-    var pick=triggered[0]; // buy the highest-volume triggered token first
-    buyToken(pick,size);
-  } else if(triggered.length===0){
-    var watching=allTokens.filter(function(t){return checkRules(t).watching;}).length;
-    if(tickCount%5===0){
-      addLog('skip','Tick #'+tickCount+' | '+allTokens.length+' pairs | '+watching+' watching for $1M vol | no trigger yet',null,'d');
+  if(openCount<maxOpen&&(cash-invested)>=Math.max(size,1)){
+    var candidates=allPairs.filter(function(t){
+      return evaluate(t).pass && !positions[t.pairAddress];
+    });
+    if(candidates.length>0){
+      var pick=candidates[0]; // highest vol5m PASS token
+      buyToken(pick,size);
+    } else if(tickCount%3===0){
+      var passN=allPairs.filter(function(t){return evaluate(t).pass;}).length;
+      addLog('skip','Tick #'+tickCount+' | '+allPairs.length+' pairs | '+passN+' PASS | '+
+        (openCount>=maxOpen?'max positions open':'no entry found'),null,'d');
     }
   }
-
-  renderFeed();
-  renderPositions();
-  updateStats();
+  renderFeed();renderPositions();updateStats();
 }
 
 function buyToken(t,size){
-  // HARD RULE: never buy if token is 45+ minutes old
-  if(t.ageMin>=HARD_BUY_CUTOFF){
-    addLog('warn','BLOCKED buy '+t.sym+' -- age '+fmtAge(t.ageMin)+' >= 45min hard cutoff',null,'r');
-    return;
-  }
   invested+=size;
+  var now=Date.now();
   positions[t.pairAddress]={
     entry:t.price, tokens:size/t.price, size,
-    sym:t.sym, pairAddress:t.pairAddress, openedAt:nowTs(),
-    vol30mAtBuy:t.vol30m, ageAtBuy:t.ageMin,
+    sym:t.sym, url:t.url, pairAddress:t.pairAddress,
+    openedAt:now, last15check:0, last30check:0,
   };
   totalTrades++;
+  var pct=gv('p-size');
   addLog('buy',
     'BUY '+t.sym+' @ '+fmtP(t.price)+
-    ' | '+fmtUSD(size)+' ('+parseFloat(document.getElementById('p-size-pct').value)+'%)'+
+    ' | '+fmtUSD(size)+' ('+pct+'%)'+
     ' | liq:'+fmtK(t.liq)+
-    ' | vol30m:'+fmtK(t.vol30m)+' [TRIGGER HIT]'+
+    ' | mcap:'+fmtK(t.mcap)+
+    ' | vol5m:'+fmtK(t.vol5m)+
     ' | age:'+fmtAge(t.ageMin)+
-    ' | top:'+t.topHolder.toFixed(1)+'%',
+    ' | avgTx:'+t.avgTxSol.toFixed(1)+'SOL'+
+    ' | chg1h:'+(t.chg1h>=0?'+':'')+t.chg1h.toFixed(1)+'%',
     null,'g');
 }
 
-function checkExits(){
+function checkAllExits(){
   Object.keys(positions).forEach(function(pa){
     var pos=positions[pa];
-    var t=allTokens.find(function(x){return x.pairAddress===pa;});
+    var t=allPairs.find(function(x){return x.pairAddress===pa;});
     if(!t)return;
-    var pct=((t.price-pos.entry)/pos.entry)*100;
-    if(pct>=TAKE_PROFIT||pct<=-STOP_LOSS){
+    var ex=checkExit(pos,t);
+    if(ex.exit){
       var pnl=(t.price-pos.entry)*pos.tokens;
       realisedPnl+=pnl;cash+=pos.size+pnl;invested=Math.max(0,invested-pos.size);
       if(pnl>0){wins++;if(!bestTrade||pnl>bestTrade)bestTrade=pnl;}else losses++;
-      var reason=pct>=TAKE_PROFIT?'TP +100% HIT':'SL -50% HIT';
-      addLog('sell','SELL '+pos.sym+' | '+reason+' | '+fmtP(t.price)+' | P&L: '+(pnl>=0?'+':'')+fmtUSD(pnl),pnl);
+      addLog('sell','EXIT '+pos.sym+' | '+ex.reason+' @ '+fmtP(t.price),pnl);
       delete positions[pa];
     }
   });
 }
 
-function driftPrices(){
-  allTokens.forEach(function(t){
-    var d=(Math.random()-0.44)*0.015;
-    t.price=Math.max(t.price*0.001,t.price*(1+d));
-    // Drift vol30m — simulate accumulation
-    var vd=1+(Math.random()-0.3)*0.08;
-    t.vol30m=Math.max(0,t.vol30m*vd);
-    t.vol5m=Math.max(0,t.vol5m*(0.9+Math.random()*0.2));
-    t.buys+=Math.floor(Math.random()*12);
-    t.sells+=Math.floor(Math.random()*6);
-    if(Math.random()<0.12)t.ageMin+=1;
-    t.chg5m=t.chg5m*(0.95+Math.random()*0.1)+(Math.random()-0.45)*0.5;
-    t.chg5m=Math.max(-80,Math.min(300,t.chg5m));
-  });
-}
-
-/* ═══════════════════════════════════════
+/* ═══════════════════════════
    RENDER FEED
-═══════════════════════════════════════ */
+═══════════════════════════ */
 function renderFeed(){
-  var el=document.getElementById('token-feed');
-  if(!allTokens.length){
-    el.innerHTML='<div style="padding:16px;font-size:10px;color:#2a4a6a;">No SDR or VDOR pairs found on PumpSwap yet.<br>Re-fetch or wait for new tokens to launch.</div>';
+  var el=g('token-feed');
+  if(!allPairs.length){
+    el.innerHTML='<div style="padding:16px;font-size:9px;color:#2a4a6a;">No PumpSwap pairs found yet. Click FETCH.</div>';
     return;
   }
+  var nPass=0,nWatch=0,nFail=0;
 
-  var triggeredCount=0, watchingCount=0, failCount=0;
-
-  var html=allTokens.map(function(t){
-    var r=checkRules(t);
+  var html=allPairs.map(function(t){
+    var ev=evaluate(t);
     var inPos=!!positions[t.pairAddress];
-    if(r.triggered)triggeredCount++;
-    else if(r.watching)watchingCount++;
-    else failCount++;
+    if(ev.pass)nPass++;
+    else if(ev.fails.length<=2)nWatch++;
+    else nFail++;
 
-    var volPct=Math.min(100,(t.vol30m/VOL_TRIGGER)*100);
-    var volColor=volPct>=100?'#22c55e':volPct>=60?'#f59e0b':'#38bdf8';
+    var cardCls='tok'+(inPos?' inpos':ev.pass?' triggered':'');
+    var chipCls=inPos?'chip-in':ev.pass?'chip-pass':ev.fails.length<=2?'chip-watch':'chip-fail';
+    var chipTxt=inPos?'IN TRADE':ev.pass?'PASS':ev.fails.length<=2?'WATCH':'FAIL';
+    var chgColor=t.chg5m>=0?'#22c55e':'#ef4444';
+    var v24ratio=t.mcap>0?((t.vol24h/t.mcap)*100).toFixed(0)+'%':'--';
 
+    // Status line
     var statusHtml='';
-    var cardClass='tok';
     if(inPos){
-      cardClass='tok inpos';
-      statusHtml='<div class="status-line status-ready">&#9646;&#9646; IN POSITION -- monitoring TP/SL</div>';
-    } else if(r.noBuyAge&&r.volHit){
-      // volume hit but already over 45 min — this shouldn't happen normally but guard it
-      statusHtml='<div class="status-line status-fail">&#10007; AGE CUTOFF -- token is '+fmtAge(t.ageMin)+' old (&ge;45min). No buy even though vol hit.</div>';
-    } else if(r.triggered){
-      cardClass='tok triggered';
-      statusHtml='<div class="status-line status-ready">&#9654; TRIGGER HIT -- $1M vol in window! BOT BUYING</div>';
-    } else if(r.watching){
-      var needed=VOL_TRIGGER-t.vol30m;
-      var timeLeft=HARD_BUY_CUTOFF-t.ageMin;
-      statusHtml='<div class="status-line status-waiting">&#9679; WATCHING -- need '+fmtK(needed)+' more vol | '+Math.floor(timeLeft)+'m left before 45min cutoff</div>';
-    } else if(r.expired){
-      statusHtml='<div class="status-line status-fail">&#10007; EXPIRED -- age '+fmtAge(t.ageMin)+' passed 45min cutoff without $1M vol. No more buys.</div>';
-    } else {
-      var fails=[];
-      if(!r.isSym)fails.push('wrong symbol');
-      if(!r.isPump)fails.push('not pumpswap');
-      if(!r.ageOk)fails.push('age <5m ('+fmtAge(t.ageMin)+')');
-      if(!r.liqOk)fails.push('liq '+fmtK(t.liq)+'<$10k');
-      if(!r.topOk)fails.push('top holder '+t.topHolder.toFixed(1)+'%>10%');
-      statusHtml='<div class="status-line status-fail">&#10007; FAILS: '+fails.join(' | ')+'</div>';
+      var pos=positions[t.pairAddress];
+      var pct=((t.price-pos.entry)/pos.entry)*100;
+      var pnl=(t.price-pos.entry)*pos.tokens;
+      statusHtml='<div class="status-line sl-pos">IN TRADE: '+(pct>=0?'+':'')+pct.toFixed(1)+'% ('+(pnl>=0?'+':'')+fmtUSD(pnl)+') | SL -'+gv('p-sl')+'% / TP +'+gv('p-tp')+'%</div>';
+    } else if(ev.pass){
+      statusHtml='<div class="status-line sl-pass">&#9654; ALL RULES PASS — BOT WILL BUY</div>';
+    } else if(ev.fails.length>0){
+      var tags=ev.fails.map(function(f){return'<span class="'+(ev.fails.length<=2?'wtag':'ftag')+'">'+f+'</span>';}).join('');
+      statusHtml='<div class="fail-tags">'+tags+'</div>';
     }
 
-    var chgColor=t.chg5m>=0?'#22c55e':'#ef4444';
-    var chipCls=inPos?'chip-in':r.triggered?'chip-buy':r.watching?'chip-watch':'chip-wait';
-    var chipTxt=inPos?'IN TRADE':r.triggered?'TRIGGERED':r.watching?'WATCHING':'FAILED';
-
-    return'<div class="'+cardClass+'">'+
-      '<div class="tok-r1">'+
-      '<div style="display:flex;flex-direction:column;gap:3px;">'+
-      '<div style="display:flex;align-items:center;gap:6px;">'+
-      '<a href="'+t.url+'" target="_blank" rel="noopener" style="text-decoration:none;"><span class="sym">'+t.sym+'</span></a>'+
-      '<a href="'+t.url+'" target="_blank" rel="noopener" title="Open on Dexscreener" style="display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:2px 7px;border-radius:3px;background:#001a2d;color:#38bdf8;border:1px solid #1a3a52;text-decoration:none;font-family:\'JetBrains Mono\',monospace;font-weight:500;letter-spacing:.3px;">&#8599; DEXSCR</a>'+
+    return '<div class="'+cardCls+'">'+
+      '<div class="tok-top">'+
+      '<div>'+
+      '<div class="sym-row">'+
+      '<span class="sym">'+t.sym+'</span>'+
+      '<a class="dex-link" href="'+t.url+'" target="_blank" rel="noopener">&#8599; DEXSCR</a>'+
       (inPos?'<span class="chip chip-in">IN TRADE</span>':'')+
       '</div>'+
-      '<span class="tok-meta">'+t.chain+' &bull; '+(t.isLive?'LIVE':'MOCK')+'</span>'+
+      '<div class="chain-lbl" style="margin-top:2px;">'+t.chain+' &bull; age:'+fmtAge(t.ageMin)+'</div>'+
       '</div>'+
-      '<div style="display:flex;align-items:center;gap:6px;">'+
-      '<span style="font-size:11px;font-weight:700;color:'+chgColor+'">'+(t.chg5m>=0?'+':'')+t.chg5m.toFixed(1)+'% 5m</span>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">'+
+      '<span style="font-size:11px;font-weight:700;color:'+chgColor+'">'+(t.chg5m>=0?'+':'')+t.chg5m.toFixed(1)+'%</span>'+
       '<span class="chip '+chipCls+'">'+chipTxt+'</span>'+
       '</div></div>'+
-
       '<div class="metrics">'+
       '<div class="m"><span class="ml">Price</span><span class="mv">'+fmtP(t.price)+'</span></div>'+
-      '<div class="m"><span class="ml">Liq</span><span class="mv '+(r.liqOk?'ok':'bad')+'">'+fmtK(t.liq)+'</span></div>'+
-      '<div class="m"><span class="ml">Vol30m</span><span class="mv '+(r.volHit?'ok':volPct>=60?'warn':'')+'">'+fmtK(t.vol30m)+'</span></div>'+
-      '<div class="m"><span class="ml">Vol5m</span><span class="mv">'+fmtK(t.vol5m)+'</span></div>'+
-      '<div class="m"><span class="ml">Age</span><span class="mv '+(r.ageOk?'ok':'bad')+'">'+fmtAge(t.ageMin)+'</span></div>'+
-      '<div class="m"><span class="ml">Top Hold.</span><span class="mv '+(r.topOk?'ok':'bad')+'">'+t.topHolder.toFixed(1)+'%</span></div>'+
-      '<div class="m"><span class="ml">Buys5m</span><span class="mv ok">'+t.buys+'</span></div>'+
-      '<div class="m"><span class="ml">Sells5m</span><span class="mv">'+t.sells+'</span></div>'+
+      '<div class="m"><span class="ml">MCap</span><span class="mv '+(ev.checks.mcap?'ok':'bad')+'">'+fmtK(t.mcap)+'</span></div>'+
+      '<div class="m"><span class="ml">Liq</span><span class="mv '+(ev.checks.liq?'ok':'bad')+'">'+fmtK(t.liq)+'</span></div>'+
+      '<div class="m"><span class="ml">Vol5m</span><span class="mv '+(ev.checks.vol5m?'ok':'bad')+'">'+fmtK(t.vol5m)+'</span></div>'+
+      '<div class="m"><span class="ml">Vol1h</span><span class="mv">'+fmtK(t.vol1h)+'</span></div>'+
+      '<div class="m"><span class="ml">V24/MC</span><span class="mv '+(ev.checks.vol24ratio?'ok':'bad')+'">'+v24ratio+'</span></div>'+
+      '<div class="m"><span class="ml">Chg1h</span><span class="mv '+(ev.checks.chg1h?'ok':'bad')+'" style="color:'+(t.chg1h>=0?'#22c55e':'#ef4444')+'">'+(t.chg1h>=0?'+':'')+t.chg1h.toFixed(1)+'%</span></div>'+
+      '<div class="m"><span class="ml">Chg6h</span><span class="mv '+(ev.checks.chg6h?'ok':'bad')+'" style="color:'+(t.chg6h>=0?'#22c55e':'#ef4444')+'">'+(t.chg6h>=0?'+':'')+t.chg6h.toFixed(1)+'%</span></div>'+
+      '<div class="m"><span class="ml">AvgTx</span><span class="mv '+(ev.checks.avgTx?'ok':'bad')+'">'+t.avgTxSol.toFixed(1)+'S</span></div>'+
       '</div>'+
-
-      '<div class="vol-progress">'+
-      '<div class="vol-lbl">'+
-      '<span style="color:#2a4a6a;">30m Volume Progress to $1M trigger</span>'+
-      '<span style="color:'+volColor+';font-weight:700;">'+fmtK(t.vol30m)+' / $1M ('+volPct.toFixed(0)+'%)</span>'+
-      '</div>'+
-      '<div class="vol-bar-bg"><div class="vol-bar-fill" style="width:'+volPct+'%;background:'+volColor+';"></div></div>'+
-      '</div>'+
-
       statusHtml+
       '</div>';
   }).join('');
 
   el.innerHTML=html;
-  document.getElementById('pill-triggered').textContent=triggeredCount+' TRIGGERED';
-  document.getElementById('pill-watching').textContent=watchingCount+' WATCHING';
-  document.getElementById('pill-fail').textContent=failCount+' FAILED RULES';
-  document.getElementById('s-watching').textContent=watchingCount;
-  document.getElementById('s-triggered').textContent=triggeredCount;
+  g('pill-pass').textContent=nPass+' PASS';
+  g('pill-watch').textContent=nWatch+' WATCH';
+  g('pill-fail').textContent=nFail+' FAIL';
+  g('pill-total').textContent=allPairs.length+' TOTAL';
+  g('s-pass').textContent=nPass;
 }
 
-/* ═══════════════════════════════════════
+/* ═══════════════════════════
    RENDER POSITIONS
-═══════════════════════════════════════ */
+═══════════════════════════ */
 function renderPositions(){
-  var el=document.getElementById('positions-area');
+  var el=g('positions-area');
   var keys=Object.keys(positions);
   if(!keys.length){el.innerHTML='<div style="font-size:9px;color:#2a4a6a;">No open positions</div>';return;}
+  var tp=gv('p-tp'), sl=gv('p-sl');
   el.innerHTML=keys.map(function(pa){
     var pos=positions[pa];
-    var t=allTokens.find(function(x){return x.pairAddress===pa;});
+    var t=allPairs.find(function(x){return x.pairAddress===pa;});
     if(!t)return'';
     var pct=((t.price-pos.entry)/pos.entry)*100;
     var pnl=(t.price-pos.entry)*pos.tokens;
-    // progress: 0 = SL, 100 = TP
-    var prog=Math.max(0,Math.min(100,(pct+STOP_LOSS)/(TAKE_PROFIT+STOP_LOSS)*100));
+    var prog=Math.max(0,Math.min(100,(pct+sl)/(tp+sl)*100));
+    var elapsedMin=Math.floor((Date.now()-pos.openedAt)/60000);
+    var vol15est=t.vol5m*3, vol30est=t.vol1h>0?t.vol1h/2:t.vol5m*6;
+    var vol15ok=vol15est>=gv('p-vol15'), vol30ok=vol30est>=gv('p-vol30');
     return'<div class="pos-entry">'+
       '<div class="pos-r1">'+
-      '<div style="display:flex;align-items:center;gap:6px;">'+
+      '<div style="display:flex;align-items:center;gap:5px;">'+
       '<span style="color:#a855f7;font-weight:700;">'+pos.sym+'</span>'+
-      '<a href="'+(t.url||'https://dexscreener.com')+'" target="_blank" rel="noopener" style="font-size:9px;padding:1px 6px;border-radius:3px;background:#001a2d;color:#38bdf8;border:1px solid #1a3a52;text-decoration:none;font-family:\'JetBrains Mono\',monospace;">&#8599; DEXSCR</a>'+
+      '<a class="dex-link" href="'+pos.url+'" target="_blank" rel="noopener">&#8599; DEXSCR</a>'+
       '</div>'+
       '<span class="'+(pnl>=0?'cg':'cr')+'">'+(pnl>=0?'+':'')+fmtUSD(Math.abs(pnl))+' ('+(pct>=0?'+':'')+pct.toFixed(1)+'%)</span>'+
       '</div>'+
       '<div class="pos-r2">'+
       '<span>Entry '+fmtP(pos.entry)+'</span>'+
       '<span>Now '+fmtP(t.price)+'</span>'+
-      '<span>SL -50% / TP +100%</span>'+
+      '<span>'+elapsedMin+'m open</span>'+
       '</div>'+
+      '<div class="pos-exit">Vol15m est: '+fmtK(vol15est)+' '+(vol15ok?'&#10003;':'&#9888;')+
+      ' | Vol30m est: '+fmtK(vol30est)+' '+(vol30ok?'&#10003;':'&#9888;')+'</div>'+
       '<div class="pbar"><div class="pbar-fill" style="width:'+prog+'%;background:'+(pct>=0?'#22c55e':'#ef4444')+';"></div></div>'+
       '</div>';
   }).join('');
 }
 
-/* ═══════════════════════════════════════
+/* ═══════════════════════════
    STATS
-═══════════════════════════════════════ */
+═══════════════════════════ */
 function updateStats(){
   var unreal=Object.keys(positions).reduce(function(s,pa){
-    var pos=positions[pa];var t=allTokens.find(function(x){return x.pairAddress===pa;});
+    var pos=positions[pa];var t=allPairs.find(function(x){return x.pairAddress===pa;});
     return s+(t?(t.price-pos.entry)*pos.tokens:0);
   },0);
   var free=Math.max(0,cash-invested);
-  document.getElementById('s-port').textContent=fmtUSD(free+invested+unreal+realisedPnl);
-  var pe=document.getElementById('s-pnl');
-  pe.textContent=(realisedPnl>=0?'+':'')+fmtUSD(Math.abs(realisedPnl));
-  pe.className='sval '+(realisedPnl>=0?'cg':'cr');
-  document.getElementById('s-open').textContent=Object.keys(positions).length;
-  document.getElementById('s-total').textContent=totalTrades;
-  var tot=wins+losses;
-  document.getElementById('s-wr').textContent=tot>0?Math.round(wins/tot*100)+'%':'--';
-  document.getElementById('ms-cash').textContent=fmtUSD(free);
-  document.getElementById('ms-inv').textContent=fmtUSD(invested);
-  var ue=document.getElementById('ms-unreal');
-  ue.textContent=(unreal>=0?'+':'')+fmtUSD(Math.abs(unreal));
-  ue.className=unreal>=0?'cg':'cr';
-  document.getElementById('ms-wl').textContent=wins+' / '+losses;
-  document.getElementById('ms-best').textContent=bestTrade?'+'+fmtUSD(bestTrade):'--';
-  document.getElementById('free-cash-disp').textContent=fmtUSD(free);
-  updateSizePreview();
+  g('s-port').textContent=fmtUSD(free+invested+unreal+realisedPnl);
+  var pe=g('s-pnl');pe.textContent=(realisedPnl>=0?'+':'')+fmtUSD(Math.abs(realisedPnl));pe.className='sval '+(realisedPnl>=0?'cg':'cr');
+  g('s-open').textContent=Object.keys(positions).length;
+  g('s-total').textContent=totalTrades;
+  var tot=wins+losses;g('s-wr').textContent=tot>0?Math.round(wins/tot*100)+'%':'--';
+  g('ms-cash').textContent=fmtUSD(free);g('ms-inv').textContent=fmtUSD(invested);
+  var ue=g('ms-unreal');ue.textContent=(unreal>=0?'+':'')+fmtUSD(Math.abs(unreal));ue.className=unreal>=0?'cg':'cr';
+  g('ms-wl').textContent=wins+' / '+losses;
+  g('ms-best').textContent=bestTrade?'+'+fmtUSD(bestTrade):'--';
+  g('free-cash-disp').textContent=fmtUSD(free);
+  updatePreview();
 }
 
-/* ═══════════════════════════════════════
+/* ═══════════════════════════
    LOG
-═══════════════════════════════════════ */
+═══════════════════════════ */
 function addLog(type,msg,pnl,col){
-  var cm={g:'#22c55e',r:'#ef4444',b:'#38bdf8',a:'#f59e0b',d:'#2a4a6a',p:'#a855f7'};
+  var cm={g:'#22c55e',r:'#ef4444',b:'#38bdf8',a:'#f59e0b',d:'#2a4a6a'};
   var c=cm[col]||(type==='buy'?'#22c55e':type==='sell'?'#ef4444':type==='info'?'#38bdf8':'#2a4a6a');
   var icon={buy:'B',sell:'S',skip:'~',info:'i',warn:'!'}[type]||'.';
   logs.unshift({msg,pnl,c,icon,ts:nowTs()});
   if(logs.length>500)logs.pop();
-  renderLog();
-}
-function renderLog(){
-  var el=document.getElementById('log-area');
-  if(!logs.length){el.innerHTML='<div style="padding:10px;font-size:9px;color:#2a4a6a;">No activity</div>';return;}
+  var el=g('log-area');
   el.innerHTML=logs.slice(0,200).map(function(l){
     var ph=l.pnl!=null?'<span class="le-pnl '+(l.pnl>=0?'cg':'cr')+'">'+(l.pnl>=0?'+':'')+fmtUSD(Math.abs(l.pnl))+'</span>':'';
     return'<div class="log-entry"><span class="le-ts">'+l.ts+'</span><span class="le-icon" style="color:'+l.c+'">'+l.icon+'</span><span class="le-msg" style="color:'+l.c+'">'+l.msg+'</span>'+ph+'</div>';
   }).join('');
 }
-function clearLog(){logs=[];renderLog();}
+function clearLog(){logs=[];g('log-area').innerHTML='<div style="padding:10px;font-size:9px;color:#2a4a6a;">Cleared.</div>';}
 
-/* ── UTILS ── */
-function animProg(){
-  var w=0;clearInterval(progInt);
-  document.getElementById('scan-prog').style.width='0%';
-  progInt=setInterval(function(){w+=Math.random()*18;if(w>=100){w=100;clearInterval(progInt);}document.getElementById('scan-prog').style.width=w+'%';},60);
-}
-setInterval(function(){document.getElementById('clock-el').textContent=new Date().toTimeString().slice(0,8)+' UTC';},1000);
-document.getElementById('clock-el').textContent=new Date().toTimeString().slice(0,8)+' UTC';
-
-/* ── INIT ── */
-updateSizePreview();
+/* ═══════════════════════════
+   UTILS
+═══════════════════════════ */
+function animProg(){var w=0;clearInterval(progInt);g('scan-prog').style.width='0%';progInt=setInterval(function(){w+=Math.random()*18;if(w>=100){w=100;clearInterval(progInt);}g('scan-prog').style.width=w+'%';},60);}
+setInterval(function(){g('clock-el').textContent=new Date().toTimeString().slice(0,8)+' UTC';},1000);
+g('clock-el').textContent=new Date().toTimeString().slice(0,8)+' UTC';
+updatePreview();
 fetchData(false);
 </script>
 </body>
